@@ -8,21 +8,24 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Three.js for 3D Background -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Three.js for 3D Background (بدون فیلتر) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
-    <!-- Tone.js for Sound Effects -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Tone.js for Sound Effects (بدون فیلتر) -->
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.min.js"></script>
 
     <style>
-        /* فونت یکان بخ - وب‌فونت عمومی */
+        /* فونت یکان - فراخوانی از گیت‌هاب */
         @font-face {
-            font-family: 'Yekan Bakh';
-            src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/fonts/webfonts/Vazirmatn-Bold.woff2') format('woff2');
+            font-family: 'Yekan';
+            src: url('https://cdn.jsdelivr.net/gh/DediData/Yekan-Font/Yekan.woff') format('woff'),
+                 url('https://cdn.jsdelivr.net/gh/DediData/Yekan-Font/Yekan.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
         }
 
         * {
-            font-family: 'Yekan Bakh', Tahoma, sans-serif;
+            font-family: 'Yekan', Tahoma, sans-serif;
             font-weight: bold !important;
         }
 
@@ -160,9 +163,8 @@
                 <span id="live-gold-price">--</span> <span class="text-sm font-normal text-yellow-500 ml-2">تومان</span>
             </div>
             
-            <div class="w-full flex justify-between items-center mt-1">
+            <div class="w-full flex justify-center items-center mt-1">
                 <span id="last-update-time" class="text-[10px] text-gray-500">آخرین بروزرسانی: --:--</span>
-                <span class="text-[10px] text-gray-500">منبع: Nerkh.io</span>
             </div>
         </div>
 
