@@ -2,509 +2,479 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>گالری طلا چنس - محاسبه‌گر لوکس</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>گالری طلا چنس - محاسبه‌گر قیمت</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Three.js for 3D Background (بدون فیلتر) -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-
-    <!-- Tone.js for Sound Effects (بدون فیلتر) -->
-    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.min.js"></script>
-
+    <!-- Yekan Bakh Font (Anti-Filter CDN) -->
     <style>
-        /* فونت یکان - فراخوانی از گیت‌هاب */
         @font-face {
-            font-family: 'Yekan';
-            src: url('https://cdn.jsdelivr.net/gh/DediData/Yekan-Font/Yekan.woff') format('woff'),
-                 url('https://cdn.jsdelivr.net/gh/DediData/Yekan-Font/Yekan.ttf') format('truetype');
-            font-weight: normal;
+            font-family: 'Yekan Bakh';
+            src: url('https://cdn.statically.io/gh/DediData/Yekan-Font/main/YekanBakh-Bold.woff2') format('woff2'),
+                 url('https://cdn.statically.io/gh/DediData/Yekan-Font/main/YekanBakh-Bold.woff') format('woff');
+            font-weight: bold;
             font-style: normal;
-        }
-
-        * {
-            font-family: 'Yekan', Tahoma, sans-serif;
-            font-weight: bold !important;
+            font-display: swap;
         }
 
         body {
+            font-family: 'Yekan Bakh', Tahoma, Arial, sans-serif !important;
+            background-color: #0b1120; /* رنگ پس‌زمینه دقیق مطابق عکس */
             margin: 0;
             padding: 0;
-            background-color: #0a192f; /* Darker navy background */
-            color: #f8fafc;
-            min-height: 100vh;
+            color: #ffffff;
             overflow-x: hidden;
-            overflow-y: auto;
         }
 
-        /* پس‌زمینه سه بعدی ثابت در پشت صفحه */
-        #canvas-container {
+        /* 3D Background Canvas */
+        #bg-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            background: linear-gradient(135deg, #020617 0%, #0a192f 50%, #020617 100%);
+            pointer-events: none;
         }
 
-        /* Glassmorphism Effect */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 0 15px rgba(255, 215, 0, 0.05);
-        }
-
-        /* Gold Text Gradients */
-        .text-gold-gradient {
-            background: linear-gradient(to right, #fef08a, #eab308, #ca8a04);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Neon Glow Effect */
-        .glow-gold {
-            box-shadow: 0 0 15px rgba(234, 179, 8, 0.4), 0 0 30px rgba(202, 138, 4, 0.2);
-        }
-
-        /* طراحی دکمه متریال فلزی طلایی */
-        .btn-metallic {
-            background: linear-gradient(180deg, #ffe066 0%, #f5c71a 30%, #d4af37 50%, #b8860b 80%, #996515 100%);
-            box-shadow: 
-                inset 0 1px 2px rgba(255,255,255,0.9), 
-                inset 0 -2px 5px rgba(0,0,0,0.4), 
-                0 8px 15px rgba(0,0,0,0.5), 
-                0 4px 6px rgba(0,0,0,0.3);
-            border: 1px solid #a67c00;
+        /* Container */
+        .main-container {
             position: relative;
-            overflow: hidden;
-            color: #3b2400; 
-            text-shadow: 0 1px 1px rgba(255,255,255,0.4);
-            transition: all 0.1s ease;
-        }
-        
-        .btn-metallic::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-25deg);
-            transition: left 0.6s ease;
-        }
-        
-        .btn-metallic:hover::after {
-            left: 200%;
-        }
-        
-        .btn-metallic:hover {
-            box-shadow: 
-                inset 0 1px 2px rgba(255,255,255,0.9), 
-                inset 0 -2px 5px rgba(0,0,0,0.4), 
-                0 10px 20px rgba(234, 179, 8, 0.3),
-                0 6px 8px rgba(0,0,0,0.4);
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 2rem 1.5rem;
+            max-width: 520px; /* سایز بهینه برای حفظ تناسب گرافیکی در کامپیوتر و موبایل */
+            margin: 0 auto;
         }
 
-        .btn-metallic:active {
-            transform: translateY(4px);
-            box-shadow: 
-                inset 0 3px 6px rgba(0,0,0,0.6), 
-                0 2px 4px rgba(0,0,0,0.5);
+        /* Top Panel (Live Price) - Exact Match */
+        .panel-glow {
+            background-color: #131b2f;
+            border: 1px solid rgba(234, 179, 8, 0.4);
+            border-radius: 1.25rem;
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.15);
         }
 
-        /* حذف فلش‌های کم و زیاد کردن در اینپوت از نوع number */
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        /* Bottom Panel (Calculator) */
+        .panel-dark {
+            background-color: #131b2f;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
-        input[type="number"] {
-            -moz-appearance: textfield; 
+
+        /* Metallic Button */
+        .btn-gold {
+            background: linear-gradient(180deg, #fcd34d 0%, #d97706 100%);
+            border: none;
+            border-radius: 0.75rem;
+            color: #291000;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-gold:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 5px rgba(217, 119, 6, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-gold:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Input specific hiding of arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Flashing dot */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981; /* Green */
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-dot.error {
+            background-color: #ef4444; /* Red */
+            box-shadow: 0 0 8px #ef4444;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #eab308;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="antialiased text-gray-200">
+<body>
 
-    <!-- 3D Canvas Background -->
-    <div id="canvas-container"></div>
+    <canvas id="bg-canvas"></canvas>
 
-    <!-- Main Content Wrapper -->
-    <div class="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div class="main-container w-full">
         
         <!-- Header -->
-        <header class="text-center mb-10 w-full max-w-lg mt-8">
-            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-gold-gradient mb-3 drop-shadow-lg">
-                گالری طلا چنس
-            </h1>
-            <p class="text-gray-400 text-sm sm:text-base">سیستم هوشمند محاسبه‌گر قطعات طلا</p>
-        </header>
+        <div class="text-center mb-8 w-full mt-4">
+            <h1 class="text-4xl md:text-5xl text-yellow-500 mb-3 font-bold drop-shadow-lg">گالری طلا چنس</h1>
+            <p class="text-gray-300 text-sm md:text-base opacity-80">سیستم هوشمند محاسبه‌گر قطعات طلا</p>
+        </div>
 
-        <!-- Live Price Ticker (Nerkh API) -->
-        <div class="glass-panel w-full max-w-lg rounded-2xl p-5 mb-8 glow-gold flex flex-col items-center justify-center transition-all duration-300 relative overflow-hidden">
-             <!-- Loading Overlay -->
-             <div id="price-loader" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 transition-opacity duration-300">
-                <div class="w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                <span class="text-xs text-yellow-500 animate-pulse">در حال دریافت قیمت زنده...</span>
+        <!-- پنل بالا: قیمت زنده -->
+        <div class="panel-glow w-full p-6 mb-6">
+            <!-- ردیف اول: عنوان و وضعیت -->
+            <div class="flex justify-between items-center mb-6">
+                <!-- وضعیت سمت چپ -->
+                <div class="flex items-center gap-2">
+                    <span id="status-dot" class="status-dot"></span>
+                    <span id="status-text" class="text-green-500 text-xs sm:text-sm">نرخ زنده و معتبر</span>
+                </div>
+                <!-- عنوان سمت راست -->
+                <div class="text-gray-300 text-xs sm:text-sm">نرخ زنده هر گرم طلای ۱۸ عیار</div>
             </div>
 
-            <div class="flex items-center justify-between w-full mb-2">
-                <span class="text-gray-400 text-sm">نرخ زنده هر گرم طلای ۱۸ عیار</span>
-                <div class="flex items-center">
-                    <span id="status-indicator" class="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_#eab308] inline-block ml-2 animate-pulse"></span>
-                    <span id="status-text" class="text-xs text-yellow-500">در حال بروزرسانی</span>
+            <!-- ردیف دوم: قیمت بزرگ -->
+            <div class="text-center mb-8 relative min-h-[50px] flex justify-center items-center">
+                <div id="price-loading" class="absolute flex justify-center items-center">
+                    <div class="loader"></div>
+                </div>
+                <div id="price-content" class="opacity-0 transition-opacity duration-300 flex items-baseline justify-center gap-2" dir="ltr">
+                    <span class="text-yellow-500 text-base sm:text-lg font-normal">تومان</span>
+                    <span id="live-price-display" class="text-4xl sm:text-5xl text-white font-bold tracking-tight" style="font-family: 'Yekan Bakh', sans-serif;">--,--,--</span>
                 </div>
             </div>
-            
-            <div class="text-3xl sm:text-4xl font-black text-white my-3 tracking-wider flex items-center" dir="ltr">
-                <span id="live-gold-price">--</span> <span class="text-sm font-normal text-yellow-500 ml-2">تومان</span>
-            </div>
-            
-            <div class="w-full flex justify-center items-center mt-1">
-                <span id="last-update-time" class="text-[10px] text-gray-500">آخرین بروزرسانی: --:--</span>
+
+            <!-- ردیف سوم: زمان -->
+            <div class="flex justify-end items-center text-[10px] sm:text-xs text-gray-500 font-normal">
+                <div id="update-time-display">آخرین بروزرسانی: --:--</div>
             </div>
         </div>
 
-        <!-- Calculator Section -->
-        <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 relative overflow-hidden">
-            <!-- Decorative corner elements -->
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-500/10 rounded-full blur-2xl"></div>
-            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+        <!-- پنل پایین: ماشین حساب -->
+        <div class="panel-dark w-full p-6 pb-8 relative">
+            
+            <!-- عنوان پنل -->
+            <div class="flex justify-end items-center mb-6 border-b border-gray-700/60 pb-3">
+                <h2 class="text-yellow-500 font-bold text-base sm:text-lg">محاسبه قیمت قطعه طلا</h2>
+            </div>
 
-            <h2 class="text-xl text-yellow-500 mb-6 border-b border-yellow-500/20 pb-3">محاسبه قیمت قطعه طلا</h2>
-
-            <div class="space-y-6">
-                <!-- Weight Input -->
-                <div>
-                    <label for="weight-input" class="block text-sm text-gray-300 mb-2">وزن طلا را وارد کنید (گرم)</label>
-                    <div class="relative">
-                        <input type="number" id="weight-input" step="0.01" min="0.01" placeholder="مثال: 4.5" 
-                            class="w-full bg-slate-900/50 border border-gray-600 focus:border-yellow-500 rounded-xl px-4 py-4 text-left text-xl text-white outline-none transition-all placeholder-gray-600 focus:ring-2 focus:ring-yellow-500/20" dir="ltr">
-                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">گرم</span>
-                    </div>
+            <!-- بخش ورودی وزن -->
+            <div class="mb-6 w-full">
+                <label for="weight" class="block text-gray-200 mb-3 text-sm text-right">وزن طلا را وارد کنید (گرم)</label>
+                
+                <!-- اینپوت با طراحی مشابه عکس -->
+                <div class="relative w-full bg-[#0b1120]/50 border border-gray-600 rounded-xl flex items-center px-4 py-3 overflow-hidden focus-within:border-yellow-500 transition-colors">
+                    <span class="text-gray-300 text-sm ml-3">گرم</span>
+                    <!-- input LTR است تا placeholder در سمت چپ بیفتد -->
+                    <input type="number" id="weight" step="0.01" dir="ltr" 
+                           class="flex-1 bg-transparent border-none text-white focus:ring-0 text-left p-0 text-lg md:text-xl placeholder-gray-600 outline-none" 
+                           placeholder="مثال: 4.5">
                 </div>
+                
+                <div id="error-message" class="hidden text-red-500 text-xs mt-2 text-right px-1"></div>
+            </div>
 
-                <!-- Metallic Calculate Button -->
-                <button id="calculate-btn" class="w-full btn-metallic text-lg py-4 rounded-xl flex justify-center items-center gap-2 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M224,48V208a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32H208A16,16,0,0,1,224,48ZM88,168a8,8,0,0,0-8-8H64a8,8,0,0,0,0,16H80A8,8,0,0,0,88,168Zm48,0a8,8,0,0,0-8-8H112a8,8,0,0,0,0,16h16A8,8,0,0,0,136,168Zm48,0a8,8,0,0,0-8-8H160a8,8,0,0,0,0,16h16A8,8,0,0,0,184,168ZM88,128a8,8,0,0,0-8-8H64a8,8,0,0,0,0,16H80A8,8,0,0,0,88,128Zm48,0a8,8,0,0,0-8-8H112a8,8,0,0,0,0,16h16A8,8,0,0,0,136,128Zm48,0a8,8,0,0,0-8-8H160a8,8,0,0,0,0,16h16A8,8,0,0,0,184,128ZM192,72H64a8,8,0,0,0-8,8v16a8,8,0,0,0,8,8H192a8,8,0,0,0,8-8V80A8,8,0,0,0,192,72Z"></path></svg>
-                    محاسبه قیمت
-                </button>
+            <!-- דکمه محاسبه -->
+            <button id="calculate-btn" class="btn-gold w-full py-3.5 text-lg flex justify-center items-center gap-2 mt-2">
+                <span>محاسبه قیمت</span>
+                <i class="fas fa-calculator ml-1"></i>
+            </button>
 
-                <!-- Error Message -->
-                <div id="error-message" class="hidden bg-red-900/30 border border-red-500/50 text-red-200 p-3 rounded-lg text-sm text-center transition-all"></div>
-
-                <!-- Result Area -->
-                <div id="result-section" class="hidden mt-6 pt-6 border-t border-gray-700/50 transition-all">
-                    <div class="text-center">
-                        <span class="text-gray-400 text-sm">مبلغ نهایی محاسبه شده</span>
-                        <div id="final-price-display" class="text-3xl sm:text-4xl text-gold-gradient mt-2 mb-4" dir="ltr"></div>
-                        <div class="bg-black/30 p-4 rounded-xl border border-white/5">
-                            <p class="text-xs sm:text-sm text-gray-400 leading-relaxed text-justify">
-                                <span class="text-yellow-500">توجه:</span> 
-                                مبلغ محاسبه شده با درنظر گرفتن مالیات، سود فروشنده و 
-                                <span class="text-white">۸ درصد اجرت</span> 
-                                می‌باشد.
-                            </p>
-                        </div>
-                    </div>
+            <!-- نتیجه نهایی -->
+            <div id="result-container" class="hidden flex-col items-center justify-center pt-6 mt-6 border-t border-gray-700/60">
+                <div class="text-gray-300 text-sm mb-3">مبلغ نهایی قابل پرداخت</div>
+                <div class="flex items-baseline justify-center gap-2 mb-4" dir="ltr">
+                    <span class="text-yellow-500 text-base">تومان</span>
+                    <span id="final-price" class="text-3xl sm:text-4xl text-white font-bold tracking-tight">۰</span>
+                </div>
+                <div class="mt-1 text-xs text-gray-400 text-center leading-relaxed">
+                    مبلغ محاسبه شده با در نظر گرفتن مالیات، سود فروشنده و ۸ درصد اجرت می‌باشد.
                 </div>
             </div>
-        </div>
 
+        </div>
     </div>
 
-    <script>
-        // === سیستم مدیریت صدا (Tone.js) ===
-        let synth = null;
+    <!-- بارگذاری کتابخانه‌ها از منابع بدون فیلتر -->
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
 
-        function initSound() {
-            if (!synth) {
-                synth = new Tone.PolySynth(Tone.Synth, {
-                    oscillator: { type: "triangle" },
-                    envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 1.5 }
-                }).toDestination();
-                Tone.Destination.volume.value = -12; 
-            }
+    <script>
+        // ==========================================
+        // ابزارهای تبدیل اعداد به فارسی
+        // ==========================================
+        const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        
+        // تابع تبدیل اعداد انگلیسی به فارسی
+        const toPersianNum = (numStr) => {
+            return numStr.toString().replace(/\d/g, x => persianDigits[x]);
+        };
+
+        // تابع فرمت پول (جداکننده هزارگان + اعداد فارسی)
+        const formatMoney = (amount) => {
+            const separated = Math.floor(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            return toPersianNum(separated);
+        };
+
+        // ==========================================
+        // بخش اول: راه‌اندازی پس‌زمینه سه بعدی با Three.js 
+        // ==========================================
+        const bgCanvas = document.querySelector('#bg-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 60; // تنظیم دوربین برای کادربندی بهتر
+
+        const geometry = new THREE.TetrahedronGeometry(1.5, 0); 
+        const material = new THREE.MeshStandardMaterial({ 
+            color: 0xca8a04,
+            metalness: 0.8,
+            roughness: 0.2,
+            flatShading: true
+        });
+
+        const particles = new THREE.Group();
+        scene.add(particles);
+
+        for(let i=0; i<40; i++) {
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = (Math.random() - 0.5) * 100;
+            mesh.position.y = (Math.random() - 0.5) * 100;
+            mesh.position.z = (Math.random() - 0.5) * 60 - 10;
+            
+            mesh.rotation.x = Math.random() * Math.PI;
+            mesh.rotation.y = Math.random() * Math.PI;
+            
+            mesh.userData = {
+                speedX: (Math.random() - 0.5) * 0.02,
+                speedY: (Math.random() - 0.5) * 0.02,
+                rotSpeed: (Math.random() - 0.5) * 0.04
+            };
+
+            particles.add(mesh);
         }
 
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xfde047, 1);
+        pointLight.position.set(20, 20, 20);
+        scene.add(pointLight);
+
+        function animateLoop() {
+            requestAnimationFrame(animateLoop);
+            particles.children.forEach(mesh => {
+                mesh.rotation.x += mesh.userData.rotSpeed;
+                mesh.rotation.y += mesh.userData.rotSpeed;
+                mesh.position.x += mesh.userData.speedX;
+                mesh.position.y += mesh.userData.speedY;
+                
+                if(mesh.position.x > 50 || mesh.position.x < -50) mesh.userData.speedX *= -1;
+                if(mesh.position.y > 50 || mesh.position.y < -50) mesh.userData.speedY *= -1;
+            });
+            renderer.render(scene, camera);
+        }
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ==========================================
+        // بخش دوم: افکت‌های صوتی
+        // ==========================================
+        const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+        synth.set({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.05, decay: 0.1, sustain: 0.1, release: 0.5 },
+            volume: -10
+        });
+
         function playSuccessSound() {
-            try {
-                initSound();
-                if (Tone.context.state !== 'running') Tone.context.resume();
-                synth.triggerAttackRelease(["C5", "E5", "G5"], "8n");
-            } catch (e) { console.log("Audio not supported or blocked"); }
+            if(Tone.context.state !== 'running') Tone.start();
+            synth.triggerAttackRelease(["C5", "E5"], "8n");
         }
 
         function playErrorSound() {
-            try {
-                initSound();
-                if (Tone.context.state !== 'running') Tone.context.resume();
-                synth.triggerAttackRelease(["C3", "Eb3"], "16n");
-            } catch (e) { console.log("Audio not supported or blocked"); }
+            if(Tone.context.state !== 'running') Tone.start();
+            synth.triggerAttackRelease(["C4", "G3"], "8n");
         }
 
-        // === API Integration and Variables ===
-        let currentGoldPrice = 0; 
-        
-        // Your newly purchased API Key
-        const NERKH_API_KEY = '2U0VMB4YTPKIZRoP0WPxlL28bsMUWW92p9cJqHEe1H'; 
-        const UPDATE_INTERVAL_MS = 60000; // Update every 60 seconds
+        // ==========================================
+        // بخش سوم: دریافت API طلا و محاسبه (با اعداد فارسی)
+        // ==========================================
+        let currentGoldPrice = null; 
+        const API_KEY = "2U0VMB4YTPKIZRoP0WPxlL28bsMUWW92p9cJqHEe1H";
+        const API_URL = `https://api.nerkh.io/v2/prices/json/gold/GOLD18K?x-api-key=${API_KEY}`;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const calcBtn = document.getElementById('calculate-btn');
-            const wInput = document.getElementById('weight-input');
-            
-            if (calcBtn) calcBtn.addEventListener('click', calculateFinalPrice);
-            if (wInput) wInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') calculateFinalPrice();
-            });
+        const elements = {
+            priceDisplay: document.getElementById('live-price-display'),
+            updateTime: document.getElementById('update-time-display'),
+            statusText: document.getElementById('status-text'),
+            statusDot: document.getElementById('status-dot'),
+            loading: document.getElementById('price-loading'),
+            content: document.getElementById('price-content'),
+            weightInput: document.getElementById('weight'),
+            calcBtn: document.getElementById('calculate-btn'),
+            resultContainer: document.getElementById('result-container'),
+            finalPrice: document.getElementById('final-price'),
+            errorMsg: document.getElementById('error-message')
+        };
 
-            // Start fetching live price
-            fetchLiveGoldPrice();
-            // Set interval for background updates
-            setInterval(fetchLiveGoldPrice, UPDATE_INTERVAL_MS);
-        });
+        const updateStatusUI = (isError) => {
+            if (isError) {
+                elements.statusText.textContent = "خطا عدم دریافت اطلاعات";
+                elements.statusText.className = "text-red-500 text-xs sm:text-sm";
+                elements.statusDot.classList.add('error');
+            } else {
+                elements.statusText.textContent = "نرخ زنده و معتبر";
+                elements.statusText.className = "text-green-500 text-xs sm:text-sm";
+                elements.statusDot.classList.remove('error');
+            }
+        };
+
+        const showError = (msg) => {
+            elements.errorMsg.textContent = msg;
+            elements.errorMsg.classList.remove('hidden');
+            setTimeout(() => {
+                elements.errorMsg.classList.add('hidden');
+            }, 5000);
+        };
 
         async function fetchLiveGoldPrice() {
-            const loader = document.getElementById('price-loader');
-            const statusIndicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('status-text');
-            const priceDisplay = document.getElementById('live-gold-price');
-            const timeDisplay = document.getElementById('last-update-time');
-            const calcBtn = document.getElementById('calculate-btn');
-
             try {
-                if(currentGoldPrice === 0) loader.style.opacity = '1';
-                
-                statusIndicator.className = 'w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_#eab308] inline-block ml-2 animate-pulse';
-                statusText.innerText = 'در حال بروزرسانی...';
-                statusText.className = 'text-xs text-yellow-500';
-
-                // Constructing the URL with the API key as a query parameter as per OpenAPI spec
-                const apiUrl = `https://api.nerkh.io/v2/prices/json/gold/GOLD18K?x-api-key=${NERKH_API_KEY}`;
-
-                // Making the fetch request. Including standard headers.
-                const response = await fetch(apiUrl, {
+                const response = await fetch(API_URL, {
                     method: 'GET',
-                    headers: {
+                    headers: { 
                         'Accept': 'application/json',
-                        // Attempting to send in header as well, just in case the server prefers it
-                        'x-api-key': NERKH_API_KEY 
-                    }
+                        'x-api-key': API_KEY
+                    },
+                    cache: 'no-store'
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+                const jsonResponse = await response.json();
+                let rawPrice = null;
+
+                if (jsonResponse?.data?.prices?.current) {
+                    rawPrice = parseFloat(jsonResponse.data.prices.current);
+                } else if (jsonResponse?.data?.prices?.GOLD18K?.current) {
+                    rawPrice = parseFloat(jsonResponse.data.prices.GOLD18K.current);
+                } else if (jsonResponse?.prices?.GOLD18K?.current) {
+                    rawPrice = parseFloat(jsonResponse.prices.GOLD18K.current);
                 }
 
-                const responseData = await response.json();
-
-                // جستجو برای پیدا کردن قیمت در ساختارهای مختلف احتمالی فایل JSON
-                let priceString = null;
+                if (!rawPrice || isNaN(rawPrice)) {
+                    throw new Error("ساختار پاسخ API با انتظار مطابقت ندارد.");
+                }
                 
-                if (responseData?.data?.prices?.current) {
-                    priceString = responseData.data.prices.current;
-                } else if (responseData?.data?.prices?.GOLD18K?.current) {
-                    priceString = responseData.data.prices.GOLD18K.current;
-                } else if (responseData?.data?.GOLD18K?.current) {
-                    priceString = responseData.data.GOLD18K.current;
-                } else if (responseData?.prices?.GOLD18K?.current) {
-                    priceString = responseData.prices.GOLD18K.current;
-                } else if (responseData?.data?.prices?.gold?.GOLD18K?.current) {
-                    priceString = responseData.data.prices.gold.GOLD18K.current;
-                }
+                // قیمت مستقیماً از API خوانده می‌شود (شرط اشتباهِ تقسیم بر 10 حذف شد)
+                // اگر روزی متوجه شدید عدد سایت یک صفر اضافه دارد (یعنی ریال است)، کافیست خط زیر را به این شکل تغییر دهید:
+                // currentGoldPrice = rawPrice / 10;
+                currentGoldPrice = rawPrice; 
 
-                if (priceString) {
-                    let price = parseFloat(priceString);
-                    
-                    // The API likely returns Rials. If it's over 30 million, it's definitely Rials.
-                    // 18K gold is around 4.5m Tomans (45m Rials) currently.
-                    if (price > 30000000) {
-                        price = price / 10;
-                    }
+                updateStatusUI(false);
+                
+                // استفاده از اعداد فارسی
+                elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
+                
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+                // مطمئن می‌شویم زمان هم فارسی است
+                elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
 
-                    currentGoldPrice = price;
-
-                    priceDisplay.innerText = new Intl.NumberFormat('fa-IR').format(Math.round(currentGoldPrice));
-                    
-                    const now = new Date();
-                    let updateTimeStr = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-                    
-                    timeDisplay.innerText = `آخرین بروزرسانی: ${updateTimeStr}`;
-                    
-                    statusIndicator.className = 'w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] inline-block ml-2';
-                    statusText.innerText = 'نرخ زنده و معتبر';
-                    statusText.className = 'text-xs text-green-500';
-                    calcBtn.disabled = false;
-                    calcBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-
-                    setTimeout(() => { loader.style.opacity = '0'; loader.style.pointerEvents = 'none'; }, 500);
-
-                } else {
-                    console.error("اطلاعات دریافتی از API:", responseData);
-                    throw new Error("Invalid format received from API. Check console for response data.");
-                }
+                elements.loading.classList.add('hidden');
+                elements.content.classList.remove('opacity-0');
 
             } catch (error) {
-                console.error("خطا در ارتباط با API نرخ:", error);
+                console.error("خطا در دریافت قیمت:", error);
                 
-                currentGoldPrice = 0;
-                priceDisplay.innerHTML = '<span class="text-xl sm:text-2xl text-red-400">خطا در دریافت اطلاعات</span>';
-                timeDisplay.innerText = 'امکان دریافت نرخ لحظه‌ای وجود ندارد';
-
-                statusIndicator.className = 'w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444] inline-block ml-2';
-                let errorMsg = 'خطا در ارتباط';
+                updateStatusUI(true);
+                currentGoldPrice = null; 
                 
-                // Specifically detect 401
-                if(error.message.includes('401')) {
-                    errorMsg = 'خطای کلید API (۴۰۱) - حالت نمایشی';
-                }
+                elements.priceDisplay.textContent = "---";
+                elements.updateTime.textContent = "دریافت نشد";
                 
-                statusText.innerText = errorMsg;
-                statusText.className = 'text-xs text-red-500';
-                
-                // Disable calculate button
-                calcBtn.disabled = true;
-                calcBtn.classList.add('opacity-50', 'cursor-not-allowed');
-
-                setTimeout(() => { loader.style.opacity = '0'; loader.style.pointerEvents = 'none'; }, 500);
+                elements.loading.classList.add('hidden');
+                elements.content.classList.remove('opacity-0');
             }
         }
 
-        function calculateFinalPrice() {
-            const errorMessage = document.getElementById('error-message');
-            const resultSection = document.getElementById('result-section');
-            const finalPriceDisplay = document.getElementById('final-price-display');
-            
-            if (currentGoldPrice === 0) {
-                errorMessage.innerText = "لطفاً تا دریافت نرخ معتبر طلا صبر کنید.";
-                errorMessage.classList.remove('hidden');
+        // عملکرد دکمه محاسبه
+        elements.calcBtn.addEventListener('click', () => {
+            const weightVal = parseFloat(elements.weightInput.value);
+
+            if (isNaN(weightVal) || weightVal <= 0) {
                 playErrorSound();
+                showError("لطفاً وزن طلا را به صورت صحیح (مثلاً 4.5) وارد کنید.");
                 return;
             }
 
-            errorMessage.classList.add('hidden');
-            resultSection.classList.add('hidden');
-
-            const weight = parseFloat(document.getElementById('weight-input').value);
-
-            if (isNaN(weight) || weight <= 0) {
-                errorMessage.innerText = "لطفاً وزن معتبری وارد کنید.";
-                errorMessage.classList.remove('hidden');
-                playErrorSound(); 
+            if (currentGoldPrice === null || currentGoldPrice <= 0) {
+                playErrorSound();
+                showError("به دلیل عدم ارتباط با سرور قیمت، محاسبه امکان‌پذیر نیست.");
                 return;
             }
 
-            const activePrice = currentGoldPrice;
+            elements.errorMsg.classList.add('hidden');
 
-            // 1. ارزش طلای خام
-            const rawGoldValue = weight * activePrice;
-            // 2. بعلاوه 8 درصد اجرت
-            const valueWithWage = rawGoldValue + (rawGoldValue * 0.08);
-            // 3. بعلاوه سود فروشنده (10%)
-            const valueWithProfit = valueWithWage + (valueWithWage * 0.10);
-            // 4. بعلاوه مالیات (3%)
-            const finalValue = valueWithProfit + (valueWithProfit * 0.03);
+            // فرمول محاسبه (پایه + 8% + 10% + 3%)
+            const baseValue = weightVal * currentGoldPrice;
+            const wage = baseValue * 0.08;
+            const priceWithWage = baseValue + wage;
+            const profit = priceWithWage * 0.10;
+            const priceWithProfit = priceWithWage + profit;
+            const tax = priceWithProfit * 0.03;
+            const finalTotal = priceWithProfit + tax;
 
-            const formattedResult = new Intl.NumberFormat('fa-IR').format(Math.round(finalValue));
-
-            finalPriceDisplay.innerHTML = `${formattedResult} <span class="text-xl text-yellow-500">تومان</span>`;
-            resultSection.classList.remove('hidden');
+            // نمایش با اعداد فارسی
+            elements.finalPrice.textContent = formatMoney(finalTotal);
+            
+            elements.resultContainer.classList.remove('hidden');
+            elements.resultContainer.classList.add('flex');
             
             playSuccessSound();
-        }
+        });
 
-        // === سیستم پس‌زمینه سه بعدی طلایی (Three.js) ===
-        function init3DBackground() {
-            const container = document.getElementById('canvas-container');
-            const scene = new THREE.Scene();
-            
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 15;
-
-            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            container.appendChild(renderer.domElement);
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambientLight);
-
-            const pointLight1 = new THREE.PointLight(0xffd700, 1.2, 100);
-            pointLight1.position.set(10, 10, 10);
-            scene.add(pointLight1);
-
-            const pointLight2 = new THREE.PointLight(0xffa500, 1, 100);
-            pointLight2.position.set(-10, -10, 10);
-            scene.add(pointLight2);
-
-            const goldMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffd700,
-                metalness: 0.9,
-                roughness: 0.2,
-            });
-
-            const objects = [];
-            const geometryTypes = [
-                new THREE.IcosahedronGeometry(1, 0),
-                new THREE.TorusGeometry(0.8, 0.3, 16, 100),
-                new THREE.OctahedronGeometry(1, 0)
-            ];
-
-            for (let i = 0; i < 25; i++) {
-                const geometry = geometryTypes[Math.floor(Math.random() * geometryTypes.length)];
-                const mesh = new THREE.Mesh(geometry, goldMaterial);
-                
-                mesh.position.x = (Math.random() - 0.5) * 40;
-                mesh.position.y = (Math.random() - 0.5) * 40;
-                mesh.position.z = (Math.random() - 0.5) * 20 - 5;
-                
-                mesh.rotation.x = Math.random() * Math.PI;
-                mesh.rotation.y = Math.random() * Math.PI;
-                
-                const scale = Math.random() * 0.5 + 0.2;
-                mesh.scale.set(scale, scale, scale);
-                
-                mesh.userData = {
-                    rx: (Math.random() - 0.5) * 0.02,
-                    ry: (Math.random() - 0.5) * 0.02,
-                    rz: (Math.random() - 0.5) * 0.02
-                };
-                
-                scene.add(mesh);
-                objects.push(mesh);
-            }
-
-            function animate() {
-                requestAnimationFrame(animate);
-                
-                objects.forEach(obj => {
-                    obj.rotation.x += obj.userData.rx;
-                    obj.rotation.y += obj.userData.ry;
-                    obj.rotation.z += obj.userData.rz;
-                });
-                
-                camera.position.x = Math.sin(Date.now() * 0.0001) * 2;
-                camera.position.y = Math.cos(Date.now() * 0.0001) * 2;
-                camera.lookAt(scene.position);
-
-                renderer.render(scene, camera);
-            }
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-
-            animate();
-        }
-
-        window.addEventListener('load', init3DBackground);
-
+        window.onload = function() {
+            animateLoop();
+            fetchLiveGoldPrice();
+            setInterval(fetchLiveGoldPrice, 60000); 
+        };
     </script>
 </body>
 </html>
