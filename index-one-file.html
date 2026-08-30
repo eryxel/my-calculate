@@ -336,13 +336,16 @@
         }
 
         // ==========================================
-        // بخش سوم: دریافت API طلا و محاسبه (با اعداد فارسی) – از طریق پروکسی بدون فیلتر
+        // بخش سوم: دریافت API طلا و محاسبه (با اعداد فارسی) – از طریق پروکسی جدید
         // ==========================================
         let currentGoldPrice = null; 
         const API_KEY = "2U0VMB4YTPKIZRoP0WPxlL28bsMUWW92p9cJqHEe1H";
-        // استفاده از allorigins به عنوان پروکسی برای دور زدن فیلتر
-        const PROXY_URL = "https://api.allorigins.win/raw?url=";
-        const API_URL = `${PROXY_URL}https://api.nerkh.io/v2/prices/json/gold/GOLD18K?x-api-key=${API_KEY}`;
+        
+        // ============= تغییرات اعمال شده =============
+        // آدرس پروکسی جدید (مطابق درخواست شما)
+        const PROXY_URL = "https://relaxed-travesseiro-437fc5.netlify.app/proxy/";
+        const API_URL = `${PROXY_URL}v2/prices/json/gold/GOLD18K?x-api-key=${API_KEY}`;
+        // =============================================
 
         const elements = {
             priceDisplay: document.getElementById('live-price-display'),
