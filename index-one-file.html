@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>گالری طلا چنس - محاسبه‌گر قیمت</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     
     <style>
-        /* فونت یکان بخ - ضد فیلتر */
         @font-face {
             font-family: 'Yekan Bakh';
             src: url('https://cdn.statically.io/gh/DediData/Yekan-Font/main/YekanBakh-Bold.woff2') format('woff2'),
@@ -23,7 +20,7 @@
 
         body {
             font-family: 'Yekan Bakh', Tahoma, Arial, sans-serif !important;
-            background-color: #0b1120; /* رنگ سرمه‌ای تیره دقیقاً مشابه عکس */
+            background-color: #0b1120;
             margin: 0;
             padding: 0;
             color: #ffffff;
@@ -33,7 +30,6 @@
 
         * { font-family: 'Yekan Bakh', Tahoma, Arial, sans-serif !important; }
 
-        /* پس‌زمینه سه‌بعدی */
         #bg-canvas {
             position: fixed;
             top: 0;
@@ -57,7 +53,6 @@
             margin: 0 auto;
         }
 
-        /* پنل بالا دقیقاً مشابه عکس (هاله نئونی زرد) */
         .panel-glow {
             background-color: rgba(15, 23, 42, 0.6); 
             backdrop-filter: blur(10px);
@@ -67,7 +62,6 @@
             width: 100%;
         }
 
-        /* پنل پایین */
         .panel-dark {
             background-color: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(10px);
@@ -77,7 +71,6 @@
             width: 100%;
         }
 
-        /* دکمه محاسبه - متالیک طلایی */
         .btn-gold {
             background: linear-gradient(180deg, #fcd34d 0%, #b45309 100%);
             border: none;
@@ -95,7 +88,6 @@
             box-shadow: 0 1px 5px rgba(217, 119, 6, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
         }
 
-        /* نقطه وضعیت چشمک‌زن */
         .status-dot {
             width: 8px;
             height: 8px;
@@ -108,7 +100,11 @@
         .status-dot.warning {
             background-color: #f97316;
             box-shadow: 0 0 8px #f97316;
-            animation: pulse 1.5s infinite;
+        }
+
+        .status-dot.error {
+            background-color: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
         }
 
         @keyframes pulse {
@@ -134,18 +130,15 @@
 </head>
 <body>
 
-    <!-- پس زمینه سه بعدی -->
     <canvas id="bg-canvas"></canvas>
 
     <div class="main-container">
         
-        <!-- Header -->
         <div class="text-center mb-6 w-full mt-4">
             <h1 class="text-4xl md:text-5xl text-yellow-500 mb-2 font-bold drop-shadow-lg tracking-wide">گالری طلا چنس</h1>
             <p class="text-gray-300 text-xs md:text-sm opacity-80">سیستم هوشمند محاسبه‌گر قطعات طلا</p>
         </div>
 
-        <!-- پنل بالا: قیمت زنده -->
         <div class="panel-glow p-4 md:p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-2">
@@ -161,7 +154,6 @@
                 </div>
                 <div id="price-content" class="opacity-0 transition-opacity duration-300 flex items-center justify-center gap-2" dir="ltr">
                     <span class="text-yellow-500 text-sm md:text-lg font-normal pt-1">تومان</span>
-                    <!-- عدد طلا -->
                     <span id="live-price-display" class="text-3xl md:text-4xl text-white font-bold tracking-tight">--,--,--</span>
                 </div>
             </div>
@@ -172,7 +164,6 @@
             </div>
         </div>
 
-        <!-- پنل پایین: ماشین حساب -->
         <div class="panel-dark p-4 md:p-6 pb-6 relative">
             
             <div class="flex justify-end items-center mb-6 border-b border-gray-700/60 pb-3">
@@ -196,7 +187,6 @@
                 <i class="fas fa-calculator mr-1 opacity-80 text-xs md:text-sm"></i>
             </button>
 
-            <!-- نتیجه نهایی -->
             <div id="result-container" class="hidden flex-col items-center justify-center pt-5 mt-5 border-t border-gray-700/60">
                 <div class="text-gray-300 text-xs md:text-sm mb-2">مبلغ نهایی قابل پرداخت</div>
                 <div class="flex items-center justify-center gap-2 mb-2" dir="ltr">
@@ -211,12 +201,10 @@
         </div>
     </div>
 
-    <!-- سرورهای امن برای گرافیک -->
     <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
     <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
 
     <script>
-        // توابع تبدیل اعداد به فارسی و فرمت‌بندی
         const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
         const englishDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
         
@@ -239,7 +227,6 @@
             return toPersianNum(separated);
         };
 
-        // تنظیمات 3D پس زمینه
         const bgCanvas = document.querySelector('#bg-canvas');
         const renderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -303,7 +290,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // صداها
         const synth = new Tone.PolySynth(Tone.Synth).toDestination();
         synth.set({
             oscillator: { type: "sine" },
@@ -338,11 +324,15 @@
         };
 
         const updateStatusUI = (statusType, msg) => {
-            elements.statusDot.className = "status-dot"; // Reset
+            elements.statusDot.className = "status-dot"; 
             if (statusType === 'warning') {
                 elements.statusText.textContent = msg;
                 elements.statusText.className = "text-orange-400 text-xs sm:text-sm";
                 elements.statusDot.classList.add('warning');
+            } else if (statusType === 'error') {
+                elements.statusText.textContent = msg;
+                elements.statusText.className = "text-red-400 text-xs sm:text-sm";
+                elements.statusDot.classList.add('error');
             } else {
                 elements.statusText.textContent = msg;
                 elements.statusText.className = "text-green-500 text-xs sm:text-sm";
@@ -355,25 +345,25 @@
             setTimeout(() => { elements.errorMsg.classList.add('hidden'); }, 5000);
         };
 
-        // تابع اصلی دریافت قیمت از وال‌گلد (نسخه ضد قطعی)
         async function fetchLiveGoldPrice() {
             elements.loading.classList.remove('hidden');
             elements.content.classList.add('opacity-0');
 
             try {
-                // درخواست مستقیم به سرور عمومی وال‌گلد
+                // درخواست به API عمومی وال‌گلد (بدون نیاز به توکن)
                 const response = await fetch("https://api.wallgold.ir/api/v1/markets", {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
 
-                if (!response.ok) throw new Error("Server response was not ok.");
+                if (!response.ok) throw new Error("ارتباط ناموفق با سرور");
 
                 const data = await response.json();
+                
+                // پیدا کردن نماد طلای 18 عیار بر اساس مستندات
                 const goldMarket = data?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
                 
                 if (goldMarket && goldMarket.marketCap && goldMarket.marketCap.lastPrice) {
-                    // استخراج موفق قیمت
                     currentGoldPrice = parseFloat(goldMarket.marketCap.lastPrice);
                     updateStatusUI('success', "نرخ زنده و معتبر");
                 } else {
@@ -381,13 +371,11 @@
                 }
             } catch (error) {
                 console.warn("ارتباط زنده مسدود شد، استفاده از نرخ پایه (آفلاین).");
-                
-                // در صورت قطعی اینترنت یا مسدود شدن توسط فایروال مرورگر:
-                // قیمت پایه قرار داده میشود تا ماشین حساب کار کند (نقطه نارنجی میشود)
+                // سیستم ضد قطعی (Fallback): اگر فایروال مرورگر دسترسی را ببندد، سایت خراب نمی‌شود
                 currentGoldPrice = 4750000; 
                 updateStatusUI('warning', "نرخ آفلاین (محدودیت سرور)");
             } finally {
-                // آپدیت کردن صفحه با عدد نهایی
+                // نمایش عدد نهایی در صفحه
                 elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
                 
                 const now = new Date();
@@ -411,13 +399,12 @@
 
             if (currentGoldPrice === null || currentGoldPrice <= 0) {
                 playErrorSound();
-                showError("خطا در سیستم قیمت‌گذاری. لطفاً کمی صبر کنید.");
+                showError("خطا در دریافت نرخ پایه.");
                 return;
             }
 
             elements.errorMsg.classList.add('hidden');
 
-            // فرمول محاسباتی: پایه + ۸٪ اجرت + ۱۰٪ سود + ۳٪ مالیات
             const baseValue = weightVal * currentGoldPrice;
             const wage = baseValue * 0.08;
             const priceWithWage = baseValue + wage;
@@ -433,24 +420,20 @@
             playSuccessSound();
         });
 
-        // مدیریت تایپ هوشمند در موبایل و کامپیوتر
         elements.weightInput.addEventListener('input', function(e) {
             let val = this.value;
-            // حذف کاراکترهای غیرمجاز
             val = val.replace(/[^0-9۰-۹\.]/g, '');
-            // جلوگیری از بیش از یک نقطه اعشار
             const parts = val.split('.');
             if (parts.length > 2) {
                 val = parts[0] + '.' + parts.slice(1).join('');
             }
-            // تبدیل اتوماتیک به اعداد زیبای فارسی
             this.value = toPersianNum(val);
         });
 
         window.onload = function() {
-            animateLoop(); // استارت انیمیشن پس‌زمینه
-            fetchLiveGoldPrice(); // گرفتن قیمت طلا
-            setInterval(fetchLiveGoldPrice, 60000); // آپدیت هر ۱ دقیقه
+            animateLoop(); 
+            fetchLiveGoldPrice(); 
+            setInterval(fetchLiveGoldPrice, 60000); // آپدیت قیمت هر ۶۰ ثانیه
         };
     </script>
 </body>
