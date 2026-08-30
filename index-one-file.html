@@ -158,13 +158,13 @@
                 </div>
                 <div id="price-content" class="opacity-0 transition-opacity duration-300 flex items-center justify-center gap-2" dir="ltr">
                     <span class="text-yellow-500 text-sm md:text-lg font-normal pt-1">تومان</span>
-                    <!-- عدد طلا مستقیماً از API -->
+                    <!-- عدد طلا -->
                     <span id="live-price-display" class="text-3xl md:text-4xl text-white font-bold tracking-tight">--,--,--</span>
                 </div>
             </div>
 
             <div class="flex justify-between items-center text-[10px] sm:text-xs text-gray-500 font-normal mt-2">
-                <div id="source-display" class="text-transparent selection:text-transparent cursor-default"></div>
+                <div class="text-transparent selection:text-transparent cursor-default"></div>
                 <div id="update-time-display">آخرین بروزرسانی: --:--</div>
             </div>
         </div>
@@ -180,7 +180,6 @@
                 <label for="weight" class="block text-gray-200 mb-3 text-xs md:text-sm text-right">وزن طلا را وارد کنید (گرم)</label>
                 
                 <div class="relative w-full bg-[#0f172a] border border-gray-600 rounded-xl flex items-center px-3 py-2.5 md:py-3 overflow-hidden focus-within:border-yellow-500 transition-colors">
-                    <!-- جایگاه جدید کلمه گرم و مثال -->
                     <input type="text" inputmode="decimal" id="weight" dir="rtl" 
                            class="flex-1 bg-transparent border-none text-white focus:ring-0 text-left pl-2 text-sm md:text-base placeholder-gray-600 outline-none w-full" 
                            placeholder="مثال: ۴.۵">
@@ -321,9 +320,6 @@
 
         // --- بخش API هوشمند (وال‌گلد) ---
         let currentGoldPrice = null; 
-        
-        // استفاده از API عمومی وال‌گلد (بدون نیاز به توکن و پروکسی)
-        const TARGET_API = "https://api.wallgold.ir/api/v1/markets";
 
         const elements = {
             statusDot: document.getElementById('status-dot'),
@@ -363,28 +359,39 @@
                 elements.loading.classList.remove('hidden');
                 elements.content.classList.add('opacity-0');
 
-                // ارسال درخواست مستقیم به وال‌گلد
-                const response = await fetch(TARGET_API, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
+                const TARGET_API = "https://api.wallgold.ir/api/v1/markets";
+                let data = null;
 
-                if (!response.ok) {
-                    throw new Error("ارتباط با سرور وال‌گلد برقرار نشد");
+                try {
+                    // تلاش اول: اتصال مستقیم به وال‌گلد
+                    const response = await fetch(TARGET_API, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!response.ok) throw new Error("Direct Failed");
+                    data = await response.json();
+                } catch (directError) {
+                    // تلاش دوم: استفاده از پروکسی به عنوان پشتیبان (برای دور زدن محدودیت مرورگر)
+                    console.log("درخواست مستقیم مسدود شد، استفاده از مسیر جایگزین...");
+                    const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(TARGET_API);
+                    const proxyResponse = await fetch(proxyUrl);
+                    if (!proxyResponse.ok) throw new Error("Proxy Failed");
+                    const proxyData = await proxyResponse.json();
+                    
+                    if (proxyData && proxyData.contents) {
+                        data = JSON.parse(proxyData.contents);
+                    }
                 }
-
-                const data = await response.json();
                 
-                // بررسی موفقیت‌آمیز بودن پاسخ بر اساس مستندات
-                if (data.success && data.result) {
-                    // پیدا کردن بازار طلای 18 عیار (GLD_18C_750TMN)
+                // بررسی خروجی وال‌گلد
+                if (data && data.success && data.result) {
+                    // پیدا کردن قیمت طلای 18 عیار در بازارها
                     const goldMarket = data.result.find(market => market.symbol === 'GLD_18C_750TMN');
                     
                     if (goldMarket && goldMarket.marketCap && goldMarket.marketCap.lastPrice) {
-                        // استخراج قیمت نهایی (به تومان)
                         currentGoldPrice = parseFloat(goldMarket.marketCap.lastPrice);
                         
-                        // بروزرسانی رابط کاربری
+                        // بروزرسانی صفحه
                         updateStatusUI(false);
                         elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
                         
@@ -392,19 +399,20 @@
                         const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
                         elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
                     } else {
-                        throw new Error("قیمت طلا در خروجی وال‌گلد یافت نشد.");
+                        throw new Error("نماد طلا در وال‌گلد یافت نشد.");
                     }
                 } else {
-                     throw new Error("پاسخ نامعتبر از API");
+                     throw new Error("ساختار پاسخ API نامعتبر است");
                 }
 
             } catch (error) {
-                console.error("خطا:", error);
+                console.error("خطای API: ", error);
                 updateStatusUI(true, "خطا عدم دریافت اطلاعات");
                 currentGoldPrice = null; 
                 elements.priceDisplay.textContent = "---";
                 elements.updateTime.textContent = "---";
             } finally {
+                // پنهان کردن لودینگ و نمایش عدد
                 elements.loading.classList.add('hidden');
                 elements.content.classList.remove('opacity-0');
             }
@@ -445,12 +453,12 @@
             playSuccessSound();
         });
 
-        // مدیریت تایپ هوشمند در موبایل و کامپیوتر
+        // مدیریت تایپ هوشمند (تبدیل به فارسی و اجازه اعشار)
         elements.weightInput.addEventListener('input', function(e) {
             let val = this.value;
             // فقط اجازه اعداد فارسی، انگلیسی و نقطه
             val = val.replace(/[^0-9۰-۹\.]/g, '');
-            // جلوگیری از دو نقطه اعشار
+            // جلوگیری از ورود بیش از یک نقطه اعشار
             const parts = val.split('.');
             if (parts.length > 2) {
                 val = parts[0] + '.' + parts.slice(1).join('');
@@ -461,7 +469,7 @@
         window.onload = function() {
             animateLoop();
             fetchLiveGoldPrice();
-            // آپدیت هر 60 ثانیه
+            // بروزرسانی قیمت هر ۶۰ ثانیه
             setInterval(fetchLiveGoldPrice, 60000); 
         };
     </script>
