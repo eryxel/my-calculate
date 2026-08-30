@@ -318,8 +318,9 @@
             synth.triggerAttackRelease(["C4", "G3"], "8n");
         }
 
-        // --- بخش API هوشمند (وال‌گلد) ---
+        // --- بخش API هوشمند (سیستم ۴ لایه) ---
         let currentGoldPrice = null; 
+        const FALLBACK_PRICE = 4750000; // قیمت پایه در صورت قطعی اینترنت یا فایروال
 
         const elements = {
             statusDot: document.getElementById('status-dot'),
@@ -335,15 +336,24 @@
             content: document.getElementById('price-content')
         };
 
-        const updateStatusUI = (isError, msg = "خطا عدم دریافت اطلاعات") => {
-            if (isError) {
+        const updateStatusUI = (statusType, msg) => {
+            elements.statusDot.className = "status-dot"; // Reset
+            if (statusType === 'error') {
                 elements.statusText.textContent = msg;
                 elements.statusText.className = "text-red-500 text-xs sm:text-sm";
-                elements.statusDot.classList.add('error');
+                elements.statusDot.style.backgroundColor = "#ef4444";
+                elements.statusDot.style.boxShadow = "0 0 8px #ef4444";
+                elements.statusDot.style.animation = "none";
+            } else if (statusType === 'warning') {
+                elements.statusText.textContent = msg;
+                elements.statusText.className = "text-orange-400 text-xs sm:text-sm";
+                elements.statusDot.style.backgroundColor = "#f97316";
+                elements.statusDot.style.boxShadow = "0 0 8px #f97316";
             } else {
-                elements.statusText.textContent = "نرخ زنده و معتبر";
+                elements.statusText.textContent = msg;
                 elements.statusText.className = "text-green-500 text-xs sm:text-sm";
-                elements.statusDot.classList.remove('error');
+                elements.statusDot.style.backgroundColor = "#10b981";
+                elements.statusDot.style.boxShadow = "0 0 8px #10b981";
             }
         };
 
@@ -354,68 +364,66 @@
         };
 
         async function fetchLiveGoldPrice() {
-            try {
-                // نمایش لودینگ
-                elements.loading.classList.remove('hidden');
-                elements.content.classList.add('opacity-0');
+            elements.loading.classList.remove('hidden');
+            elements.content.classList.add('opacity-0');
 
-                const TARGET_API = "https://api.wallgold.ir/api/v1/markets";
-                let data = null;
+            const TARGET_API = "https://api.wallgold.ir/api/v1/markets";
+            let data = null;
 
+            // لیست مسیرهای تست (مستقیم + ۳ پروکسی مختلف)
+            const attempts = [
+                { type: 'Direct', url: TARGET_API },
+                { type: 'Corsproxy', url: `https://corsproxy.io/?${encodeURIComponent(TARGET_API)}` },
+                { type: 'Allorigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET_API)}` },
+                { type: 'Codetabs', url: `https://api.codetabs.com/v1/proxy?quest=${TARGET_API}` }
+            ];
+
+            for (const attempt of attempts) {
                 try {
-                    // تلاش اول: اتصال مستقیم به وال‌گلد
-                    const response = await fetch(TARGET_API, {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' }
+                    console.log(`در حال تست اتصال از طریق: ${attempt.type}`);
+                    const response = await fetch(attempt.url, {
+                        headers: attempt.type === 'Direct' ? { 'Accept': 'application/json' } : {}
                     });
-                    if (!response.ok) throw new Error("Direct Failed");
-                    data = await response.json();
-                } catch (directError) {
-                    // تلاش دوم: استفاده از پروکسی به عنوان پشتیبان (برای دور زدن محدودیت مرورگر)
-                    console.log("درخواست مستقیم مسدود شد، استفاده از مسیر جایگزین...");
-                    const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(TARGET_API);
-                    const proxyResponse = await fetch(proxyUrl);
-                    if (!proxyResponse.ok) throw new Error("Proxy Failed");
-                    const proxyData = await proxyResponse.json();
                     
-                    if (proxyData && proxyData.contents) {
-                        data = JSON.parse(proxyData.contents);
+                    if (response.ok) {
+                        data = await response.json();
+                        // بررسی اینکه آیا واقعاً JSON وال‌گلد است (نه صفحه کلودفلر)
+                        if (data && data.success && data.result) {
+                            console.log(`اتصال موفق از طریق: ${attempt.type}`);
+                            break; 
+                        } else {
+                            data = null; // داده نامعتبر است، برو سراغ مسیر بعدی
+                        }
                     }
+                } catch (error) {
+                    console.warn(`مسیر ${attempt.type} مسدود بود.`);
                 }
-                
-                // بررسی خروجی وال‌گلد
-                if (data && data.success && data.result) {
-                    // پیدا کردن قیمت طلای 18 عیار در بازارها
-                    const goldMarket = data.result.find(market => market.symbol === 'GLD_18C_750TMN');
-                    
-                    if (goldMarket && goldMarket.marketCap && goldMarket.marketCap.lastPrice) {
-                        currentGoldPrice = parseFloat(goldMarket.marketCap.lastPrice);
-                        
-                        // بروزرسانی صفحه
-                        updateStatusUI(false);
-                        elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
-                        
-                        const now = new Date();
-                        const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-                        elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
-                    } else {
-                        throw new Error("نماد طلا در وال‌گلد یافت نشد.");
-                    }
-                } else {
-                     throw new Error("ساختار پاسخ API نامعتبر است");
-                }
-
-            } catch (error) {
-                console.error("خطای API: ", error);
-                updateStatusUI(true, "خطا عدم دریافت اطلاعات");
-                currentGoldPrice = null; 
-                elements.priceDisplay.textContent = "---";
-                elements.updateTime.textContent = "---";
-            } finally {
-                // پنهان کردن لودینگ و نمایش عدد
-                elements.loading.classList.add('hidden');
-                elements.content.classList.remove('opacity-0');
             }
+
+            // پردازش نتیجه
+            elements.loading.classList.add('hidden');
+            elements.content.classList.remove('opacity-0');
+
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+
+            if (data && data.result) {
+                const goldMarket = data.result.find(m => m.symbol === 'GLD_18C_750TMN');
+                if (goldMarket && goldMarket.marketCap && goldMarket.marketCap.lastPrice) {
+                    currentGoldPrice = parseFloat(goldMarket.marketCap.lastPrice);
+                    updateStatusUI('success', "نرخ زنده و معتبر");
+                    elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
+                    elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
+                    return;
+                }
+            }
+
+            // اگر تمام ۴ مسیر مسدود بودند (حالت آفلاین یا فایروال شدید)
+            console.error("تمام مسیرهای ارتباطی توسط سرور مسدود شدند. اجرای حالت آفلاین...");
+            currentGoldPrice = FALLBACK_PRICE; 
+            updateStatusUI('warning', "نرخ آفلاین (محدودیت سرور)");
+            elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
+            elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
         }
 
         // --- بخش محاسبات ---
@@ -431,7 +439,7 @@
 
             if (currentGoldPrice === null || currentGoldPrice <= 0) {
                 playErrorSound();
-                showError("سیستم در حال حاضر قادر به ارتباط با سرور قیمت نیست.");
+                showError("خطا در سیستم قیمت‌گذاری.");
                 return;
             }
 
@@ -453,12 +461,10 @@
             playSuccessSound();
         });
 
-        // مدیریت تایپ هوشمند (تبدیل به فارسی و اجازه اعشار)
+        // مدیریت تایپ هوشمند 
         elements.weightInput.addEventListener('input', function(e) {
             let val = this.value;
-            // فقط اجازه اعداد فارسی، انگلیسی و نقطه
             val = val.replace(/[^0-9۰-۹\.]/g, '');
-            // جلوگیری از ورود بیش از یک نقطه اعشار
             const parts = val.split('.');
             if (parts.length > 2) {
                 val = parts[0] + '.' + parts.slice(1).join('');
@@ -469,7 +475,6 @@
         window.onload = function() {
             animateLoop();
             fetchLiveGoldPrice();
-            // بروزرسانی قیمت هر ۶۰ ثانیه
             setInterval(fetchLiveGoldPrice, 60000); 
         };
     </script>
