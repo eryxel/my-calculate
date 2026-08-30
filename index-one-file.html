@@ -202,7 +202,7 @@
                     <span class="text-gray-400 text-sm md:text-base pl-2 border-l border-gray-600/50">گرم</span>
                     
                     <!-- فیلد ورودی به صورت راست‌چین -->
-                    <input type="number" id="weight" step="0.01" dir="ltr" 
+                    <input type="text" inputmode="decimal" id="weight" dir="ltr" 
                            class="flex-1 bg-transparent border-none text-white focus:ring-0 text-right pr-3 text-base md:text-lg placeholder-gray-600 outline-none w-full" 
                            placeholder="مثال: ۴.۵">
                 </div>
@@ -345,9 +345,13 @@
         // آدرس API آلان‌چند
         const TARGET_API = "https://api.alanchand.com/?type=golds&token=220xxrdK66agv2dPCj7E";
         
-        // استفاده از پروکسی CORS برای رفع ارور Failed to fetch در مرورگر
-        // توجه: در سایت واقعی خودتان بهتر است یک فایل PHP بسازید که API را صدا بزند
-        const API_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET_API)}`;
+        // مسیرهای ارتباطی با متدهای مختلف برای دور زدن محدودیت‌های CORS مرورگر
+        const endpoints = [
+            { url: TARGET_API, type: 'direct' },
+            { url: `https://api.allorigins.win/get?url=${encodeURIComponent(TARGET_API)}`, type: 'allorigins_get' },
+            { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET_API)}`, type: 'direct' },
+            { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(TARGET_API)}`, type: 'direct' }
+        ];
 
         const elements = {
             statusDot: document.getElementById('status-dot'),
@@ -424,15 +428,40 @@
 
         async function fetchLiveGoldPrice() {
             try {
-                // ارسال درخواست به سرور آلان‌چند
-                const response = await fetch(API_URL);
+                let jsonResponse = null;
+                let fetchSuccess = false;
 
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
+                // تست مسیرها به ترتیب (اول مستقیم، بعد واسطه‌ها)
+                for (let endpoint of endpoints) {
+                    try {
+                        // حذف هدرها برای جلوگیری از گیر کردن در مرحله CORS Preflight مرورگر
+                        const response = await fetch(endpoint.url);
+                        
+                        if (response.ok) {
+                            if (endpoint.type === 'allorigins_get') {
+                                const data = await response.json();
+                                jsonResponse = JSON.parse(data.contents);
+                            } else {
+                                jsonResponse = await response.json();
+                            }
+                            
+                            // بررسی اینکه آیا خروجی واقعا یک ساختار JSON معتبر است
+                            if (jsonResponse && typeof jsonResponse === 'object') {
+                                fetchSuccess = true;
+                                console.log("✅ ارتباط موفق بود از طریق:", endpoint.url);
+                                break; 
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`⚠️ مسیر ${endpoint.url} پاسخ نداد.`);
+                    }
                 }
 
-                const jsonResponse = await response.json();
-                console.log("اطلاعات دریافتی از آلان‌چند:", jsonResponse);
+                if (!fetchSuccess || !jsonResponse) {
+                    throw new Error("ارتباط با سرور اصلی و تمام سرورهای واسطه قطع شده است.");
+                }
+
+                console.log("اطلاعات دریافتی:", jsonResponse);
 
                 // پیدا کردن خودکار قیمت 18 عیار
                 let rawPrice = findGold18Price(jsonResponse);
@@ -441,7 +470,7 @@
                     throw new Error("ساختار نامعتبر");
                 }
                 
-                // قیمت سایت و API هر دو به تومان هستند، پس نیازی به تغییر (ضرب یا تقسیم) نیست
+                // قیمت سایت و API هر دو به تومان هستند
                 currentGoldPrice = rawPrice;
 
                 updateStatusUI(false);
@@ -505,7 +534,17 @@
         });
 
         elements.weightInput.addEventListener('input', function(e) {
-            this.value = toPersianNum(toEnglishNum(this.value)); // تبدیل تایپ به فارسی
+            let val = this.value;
+            // پاک کردن همه کاراکترها به جز اعداد فارسی، انگلیسی و نقطه
+            val = val.replace(/[^0-9۰-۹\.]/g, '');
+            
+            // جلوگیری از وارد کردن چند نقطه اعشار
+            const parts = val.split('.');
+            if (parts.length > 2) {
+                val = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            this.value = toPersianNum(val);
         });
 
         window.onload = function() {
