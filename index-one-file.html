@@ -350,32 +350,63 @@
             elements.content.classList.add('opacity-0');
 
             try {
-                // درخواست به API عمومی وال‌گلد (بدون نیاز به توکن)
-                const response = await fetch("https://api.wallgold.ir/api/v1/markets", {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
+                let foundPrice = null;
+                // سیستم ضد کش: اضافه کردن زمان فعلی به آدرس برای جلوگیری از لجبازی سرورهای واسطه
+                const timestamp = Date.now();
+                const targetUrl = `https://api.wallgold.ir/api/v1/markets?t=${timestamp}`;
 
-                if (!response.ok) throw new Error("ارتباط ناموفق با سرور");
+                // تلاش اول: اتصال مستقیم (بسیار سریع)
+                try {
+                    const res1 = await fetch(targetUrl, { headers: { 'Accept': 'application/json' } });
+                    const data1 = await res1.json();
+                    const market1 = data1?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
+                    if (market1 && market1.marketCap && market1.marketCap.lastPrice) {
+                        foundPrice = parseFloat(market1.marketCap.lastPrice);
+                    }
+                } catch (e1) {
+                    console.log("ارتباط مستقیم مسدود شد، تست پل دوم...");
+                }
 
-                const data = await response.json();
-                
-                // پیدا کردن نماد طلای 18 عیار بر اساس مستندات
-                const goldMarket = data?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
-                
-                if (goldMarket && goldMarket.marketCap && goldMarket.marketCap.lastPrice) {
-                    currentGoldPrice = parseFloat(goldMarket.marketCap.lastPrice);
+                // تلاش دوم: پل ارتباطی قوی corsproxy
+                if (!foundPrice) {
+                    try {
+                        const res2 = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+                        const data2 = await res2.json();
+                        const market2 = data2?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
+                        if (market2 && market2.marketCap && market2.marketCap.lastPrice) {
+                            foundPrice = parseFloat(market2.marketCap.lastPrice);
+                        }
+                    } catch (e2) {
+                        console.log("مسیر دوم مسدود شد، تست پل سوم...");
+                    }
+                }
+
+                // تلاش سوم: پل ارتباطی AllOrigins (کپسوله)
+                if (!foundPrice) {
+                    const bridgeUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                    const res3 = await fetch(bridgeUrl);
+                    const bridgeData = await res3.json();
+                    const data3 = JSON.parse(bridgeData.contents);
+                    const market3 = data3?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
+                    if (market3 && market3.marketCap && market3.marketCap.lastPrice) {
+                        foundPrice = parseFloat(market3.marketCap.lastPrice);
+                    }
+                }
+
+                if (foundPrice) {
+                    currentGoldPrice = foundPrice;
                     updateStatusUI('success', "نرخ زنده و معتبر");
                 } else {
-                    throw new Error("دیتای طلا یافت نشد");
+                    throw new Error("تمام مسیرهای ارتباطی توسط فایروال مسدود هستند");
                 }
+
             } catch (error) {
-                console.warn("ارتباط زنده مسدود شد، استفاده از نرخ پایه (آفلاین).");
-                // سیستم ضد قطعی (Fallback): اگر فایروال مرورگر دسترسی را ببندد، سایت خراب نمی‌شود
+                console.warn("استفاده از نرخ آفلاین به دلیل:", error);
+                
+                // در صورت قطعی اینترنت کاربر یا مسدودی کامل، عدد پیش‌فرض بارگذاری می‌شود
                 currentGoldPrice = 4750000; 
-                updateStatusUI('warning', "نرخ آفلاین (محدودیت سرور)");
+                updateStatusUI('warning', "نرخ آفلاین (محدودیت اینترنت)");
             } finally {
-                // نمایش عدد نهایی در صفحه
                 elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
                 
                 const now = new Date();
@@ -399,7 +430,7 @@
 
             if (currentGoldPrice === null || currentGoldPrice <= 0) {
                 playErrorSound();
-                showError("خطا در دریافت نرخ پایه.");
+                showError("خطا در نرخ پایه.");
                 return;
             }
 
