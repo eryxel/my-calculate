@@ -7,10 +7,11 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome (از سرور امن unpkg) -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     
     <style>
+        /* فونت یکان بخ - ضد فیلتر */
         @font-face {
             font-family: 'Yekan Bakh';
             src: url('https://cdn.statically.io/gh/DediData/Yekan-Font/main/YekanBakh-Bold.woff2') format('woff2'),
@@ -21,9 +22,8 @@
         }
 
         body {
-            /* Forced Yekan Bakh everywhere */
             font-family: 'Yekan Bakh', Tahoma, Arial, sans-serif !important;
-            background-color: #0f172a; /* Deep navy blue matching the image */
+            background-color: #0f172a; 
             margin: 0;
             padding: 0;
             color: #ffffff;
@@ -31,9 +31,7 @@
             min-height: 100vh;
         }
 
-        * {
-            font-family: 'Yekan Bakh', Tahoma, Arial, sans-serif !important;
-        }
+        * { font-family: 'Yekan Bakh', Tahoma, Arial, sans-serif !important; }
 
         #bg-canvas {
             position: fixed;
@@ -54,27 +52,29 @@
             align-items: center;
             justify-content: flex-start;
             padding: 1rem;
-            max-width: 650px;
+            max-width: 600px;
             margin: 0 auto;
         }
 
+        /* پنل بالا دقیقاً مشابه عکس (رنگ تیره و هاله نئونی زرد) */
         .panel-glow {
-            background-color: #162035; /* Solid dark background */
+            background-color: #0f172a; 
             border: 1px solid rgba(234, 179, 8, 0.4);
             border-radius: 1.25rem;
-            /* Neon yellow glow */
             box-shadow: 0 0 25px rgba(234, 179, 8, 0.2), inset 0 0 10px rgba(234, 179, 8, 0.05);
             width: 100%;
         }
 
+        /* پنل پایین */
         .panel-dark {
-            background-color: #162035;
+            background-color: #0f172a;
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 1.25rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             width: 100%;
         }
 
+        /* دکمه محاسبه - استایل سه‌بعدی و متالیک طلایی */
         .btn-gold {
             background: linear-gradient(180deg, #fcd34d 0%, #b45309 100%);
             border: none;
@@ -92,19 +92,7 @@
             box-shadow: 0 1px 5px rgba(217, 119, 6, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
         }
 
-        .btn-gold:hover {
-            filter: brightness(1.1);
-        }
-
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
-
+        /* نقطه سبز چشمک‌زن */
         .status-dot {
             width: 8px;
             height: 8px;
@@ -143,87 +131,77 @@
 </head>
 <body>
 
-    <!-- 3D Background Canvas -->
+    <!-- پس زمینه سه بعدی -->
     <canvas id="bg-canvas"></canvas>
 
     <div class="main-container">
         
         <!-- Header -->
         <div class="text-center mb-6 w-full mt-4">
-            <h1 class="text-4xl md:text-5xl text-yellow-500 mb-2 font-bold drop-shadow-lg tracking-wide">گالری طلا چنس</h1>
-            <p class="text-gray-300 text-sm opacity-80">سیستم هوشمند محاسبه‌گر قطعات طلا</p>
+            <h1 class="text-3xl md:text-5xl text-yellow-500 mb-2 font-bold drop-shadow-lg tracking-wide">گالری طلا چنس</h1>
+            <p class="text-gray-300 text-xs md:text-sm opacity-80">سیستم هوشمند محاسبه‌گر قطعات طلا</p>
         </div>
 
         <!-- پنل بالا: قیمت زنده -->
-        <div class="panel-glow p-5 md:p-6 mb-6">
-            <!-- ردیف اول: عنوان و وضعیت -->
+        <div class="panel-glow p-4 md:p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
-                <!-- وضعیت سمت چپ -->
                 <div class="flex items-center gap-2">
                     <span id="status-dot" class="status-dot"></span>
                     <span id="status-text" class="text-green-500 text-xs sm:text-sm">نرخ زنده و معتبر</span>
                 </div>
-                <!-- عنوان سمت راست -->
                 <div class="text-gray-300 text-xs sm:text-sm text-right">نرخ زنده هر گرم طلای ۱۸ عیار</div>
             </div>
 
-            <!-- ردیف دوم: قیمت بزرگ -->
-            <div class="text-center mb-4 relative min-h-[60px] flex justify-center items-center">
+            <div class="text-center mb-4 relative min-h-[50px] flex justify-center items-center">
                 <div id="price-loading" class="absolute flex justify-center items-center">
                     <div class="loader"></div>
                 </div>
-                <!-- ساختار قیمت دقیقا مطابق عکس -->
-                <div id="price-content" class="opacity-0 transition-opacity duration-300 flex items-center justify-center gap-3" dir="ltr">
-                    <span class="text-yellow-500 text-base md:text-lg font-normal pt-1">تومان</span>
-                    <span id="live-price-display" class="text-4xl md:text-5xl text-white font-bold tracking-tight">--,--,--</span>
+                <div id="price-content" class="opacity-0 transition-opacity duration-300 flex items-center justify-center gap-2" dir="ltr">
+                    <span class="text-yellow-500 text-sm md:text-lg font-normal pt-1">تومان</span>
+                    <!-- عدد طلا مستقیماً از API -->
+                    <span id="live-price-display" class="text-3xl md:text-4xl text-white font-bold tracking-tight">--,--,--</span>
                 </div>
             </div>
 
-            <!-- ردیف سوم: زمان (بدون منبع) -->
-            <div class="flex justify-end items-center text-[10px] sm:text-xs text-gray-500 font-normal">
+            <div class="flex justify-between items-center text-[10px] sm:text-xs text-gray-500 font-normal mt-2">
+                <div id="source-display" class="text-transparent selection:text-transparent cursor-default"></div>
                 <div id="update-time-display">آخرین بروزرسانی: --:--</div>
             </div>
         </div>
 
         <!-- پنل پایین: ماشین حساب -->
-        <div class="panel-dark p-5 md:p-6 pb-6 relative">
+        <div class="panel-dark p-4 md:p-6 pb-6 relative">
             
-            <!-- عنوان پنل -->
             <div class="flex justify-end items-center mb-6 border-b border-gray-700/60 pb-3">
-                <h2 class="text-yellow-500 font-bold text-base md:text-lg">محاسبه قیمت قطعه طلا</h2>
+                <h2 class="text-yellow-500 font-bold text-sm md:text-base">محاسبه قیمت قطعه طلا</h2>
             </div>
 
-            <!-- بخش ورودی وزن -->
             <div class="mb-6 w-full">
-                <label for="weight" class="block text-gray-200 mb-3 text-sm md:text-base text-right">وزن طلا را وارد کنید (گرم)</label>
+                <label for="weight" class="block text-gray-200 mb-3 text-xs md:text-sm text-right">وزن طلا را وارد کنید (گرم)</label>
                 
-                <div class="relative w-full bg-[#0f172a] border border-gray-600 rounded-xl flex items-center px-4 py-3 overflow-hidden focus-within:border-yellow-500 transition-colors">
-                    <!-- کلمه گرم در سمت چپ -->
-                    <span class="text-gray-400 text-sm md:text-base pl-2 border-l border-gray-600/50">گرم</span>
-                    
-                    <!-- فیلد ورودی به صورت راست‌چین -->
-                    <input type="text" inputmode="decimal" id="weight" dir="ltr" 
-                           class="flex-1 bg-transparent border-none text-white focus:ring-0 text-right pr-3 text-base md:text-lg placeholder-gray-600 outline-none w-full" 
+                <div class="relative w-full bg-[#0f172a] border border-gray-600 rounded-xl flex items-center px-3 py-2.5 md:py-3 overflow-hidden focus-within:border-yellow-500 transition-colors">
+                    <!-- جایگاه جدید کلمه گرم و مثال -->
+                    <input type="text" inputmode="decimal" id="weight" dir="rtl" 
+                           class="flex-1 bg-transparent border-none text-white focus:ring-0 text-left pl-2 text-sm md:text-base placeholder-gray-600 outline-none w-full" 
                            placeholder="مثال: ۴.۵">
+                    <span class="text-gray-400 text-xs md:text-sm pr-2 border-r border-gray-600/50">گرم</span>
                 </div>
-                
                 <div id="error-message" class="hidden text-red-400 text-xs mt-2 text-right px-1"></div>
             </div>
 
-            <!-- دکمه محاسبه -->
-            <button id="calculate-btn" class="btn-gold w-full py-3.5 text-base md:text-lg flex justify-center items-center gap-2">
+            <button id="calculate-btn" class="btn-gold w-full py-3 md:py-3.5 text-sm md:text-base flex justify-center items-center gap-2">
                 <span>محاسبه قیمت</span>
-                <i class="fas fa-calculator ml-1 opacity-80 text-sm"></i>
+                <i class="fas fa-calculator ml-1 opacity-80 text-xs md:text-sm"></i>
             </button>
 
             <!-- نتیجه نهایی -->
-            <div id="result-container" class="hidden flex-col items-center justify-center pt-6 mt-6 border-t border-gray-700/60">
-                <div class="text-gray-300 text-sm mb-3">مبلغ نهایی قابل پرداخت</div>
+            <div id="result-container" class="hidden flex-col items-center justify-center pt-5 mt-5 border-t border-gray-700/60">
+                <div class="text-gray-300 text-xs md:text-sm mb-2">مبلغ نهایی قابل پرداخت</div>
                 <div class="flex items-center justify-center gap-2 mb-2" dir="ltr">
-                    <span class="text-yellow-500 text-base pt-1">تومان</span>
-                    <span id="final-price" class="text-3xl md:text-4xl text-white font-bold tracking-tight">۰</span>
+                    <span class="text-yellow-500 text-sm md:text-base pt-1">تومان</span>
+                    <span id="final-price" class="text-2xl md:text-3xl text-white font-bold tracking-tight">۰</span>
                 </div>
-                <div class="text-[11px] text-gray-400 text-center leading-relaxed max-w-[80%] mx-auto">
+                <div class="text-[10px] md:text-[11px] text-gray-400 text-center leading-relaxed max-w-[90%] mx-auto mt-1">
                     مبلغ محاسبه شده با در نظر گرفتن مالیات، سود فروشنده و ۸ درصد اجرت می‌باشد.
                 </div>
             </div>
@@ -231,17 +209,27 @@
         </div>
     </div>
 
-    <!-- بارگذاری کتابخانه‌ها از منابع بدون فیلتر -->
+    <!-- سرورهای امن برای ایران -->
     <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
     <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
 
     <script>
-        // ابزارهای تبدیل اعداد به فارسی
+        // تبدیل اعداد
         const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        const englishDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
         
         const toPersianNum = (numStr) => {
             if(numStr === null || numStr === undefined) return '';
             return numStr.toString().replace(/\d/g, x => persianDigits[x]);
+        };
+
+        const toEnglishNum = (str) => {
+            if (!str) return '';
+            let result = str.toString();
+            for (let i = 0; i < 10; i++) {
+                result = result.split(persianDigits[i]).join(englishDigits[i]);
+            }
+            return result;
         };
 
         const formatMoney = (amount) => {
@@ -249,15 +237,7 @@
             return toPersianNum(separated);
         };
 
-        const toEnglishNum = (str) => {
-            const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-            let result = str.toString();
-            for (let i = 0; i < 10; i++) {
-                result = result.split(persian[i]).join(i);
-            }
-            return result;
-        };
-
+        // تنظیمات 3D پس زمینه
         const bgCanvas = document.querySelector('#bg-canvas');
         const renderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -267,10 +247,9 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 60; 
 
-        // استفاده از Tetrahedron برای ساخت ذرات هرمی شکل (مثل عکس)
         const geometry = new THREE.TetrahedronGeometry(1.8, 0); 
         const material = new THREE.MeshStandardMaterial({ 
-            color: 0xca8a04, // زرد طلایی
+            color: 0xca8a04,
             metalness: 0.7,
             roughness: 0.3,
             flatShading: true
@@ -293,7 +272,6 @@
                 speedY: (Math.random() - 0.5) * 0.03,
                 rotSpeed: (Math.random() - 0.5) * 0.02
             };
-
             particles.add(mesh);
         }
 
@@ -323,6 +301,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // صداها
         const synth = new Tone.PolySynth(Tone.Synth).toDestination();
         synth.set({
             oscillator: { type: "sine" },
@@ -340,18 +319,11 @@
             synth.triggerAttackRelease(["C4", "G3"], "8n");
         }
 
+        // --- بخش API هوشمند (وال‌گلد) ---
         let currentGoldPrice = null; 
         
-        // آدرس API آلان‌چند
-        const TARGET_API = "https://api.alanchand.com/?type=golds&token=220xxrdK66agv2dPCj7E";
-        
-        // مسیرهای ارتباطی با متدهای مختلف برای دور زدن محدودیت‌های CORS مرورگر
-        const endpoints = [
-            { url: TARGET_API, type: 'direct' },
-            { url: `https://api.allorigins.win/get?url=${encodeURIComponent(TARGET_API)}`, type: 'allorigins_get' },
-            { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET_API)}`, type: 'direct' },
-            { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(TARGET_API)}`, type: 'direct' }
-        ];
+        // استفاده از API عمومی وال‌گلد (بدون نیاز به توکن و پروکسی)
+        const TARGET_API = "https://api.wallgold.ir/api/v1/markets";
 
         const elements = {
             statusDot: document.getElementById('status-dot'),
@@ -385,137 +357,79 @@
             setTimeout(() => { elements.errorMsg.classList.add('hidden'); }, 5000);
         };
 
-        // جستجوگر هوشمند برای پیدا کردن قیمت طلا 18 عیار در بین اطلاعات سایت
-        function findGold18Price(obj) {
-            if (!obj || typeof obj !== 'object') return null;
-            
-            if (Array.isArray(obj)) {
-                for (let item of obj) {
-                    let is18k = false;
-                    let val = null;
-                    for (let key in item) {
-                        const k = String(key).toLowerCase();
-                        const v = String(item[key]).toLowerCase();
-                        if ((k === 'name' || k === 'slug' || k === 'symbol' || k === 'title') && 
-                            (v.includes('18') || v.includes('۱۸'))) {
-                            is18k = true;
-                        }
-                        if (k === 'price' || k === 'value' || k === 'p') {
-                            val = parseFloat(item[key]);
-                        }
-                    }
-                    if (is18k && val) return val;
-                    let nested = findGold18Price(item);
-                    if (nested) return nested;
-                }
-            } else {
-                for (let key in obj) {
-                    const k = String(key).toLowerCase();
-                    if (k.includes('18_ayar') || k.includes('18ayar') || k.includes('geram18') || k.includes('gold18')) {
-                        let item = obj[key];
-                        if (typeof item === 'object') {
-                            return parseFloat(item.price || item.value || item.p);
-                        } else {
-                            return parseFloat(item);
-                        }
-                    }
-                    let nested = findGold18Price(obj[key]);
-                    if (nested) return nested;
-                }
-            }
-            return null;
-        }
-
         async function fetchLiveGoldPrice() {
             try {
-                let jsonResponse = null;
-                let fetchSuccess = false;
+                // نمایش لودینگ
+                elements.loading.classList.remove('hidden');
+                elements.content.classList.add('opacity-0');
 
-                // تست مسیرها به ترتیب (اول مستقیم، بعد واسطه‌ها)
-                for (let endpoint of endpoints) {
-                    try {
-                        // حذف هدرها برای جلوگیری از گیر کردن در مرحله CORS Preflight مرورگر
-                        const response = await fetch(endpoint.url);
+                // ارسال درخواست مستقیم به وال‌گلد
+                const response = await fetch(TARGET_API, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error("ارتباط با سرور وال‌گلد برقرار نشد");
+                }
+
+                const data = await response.json();
+                
+                // بررسی موفقیت‌آمیز بودن پاسخ بر اساس مستندات
+                if (data.success && data.result) {
+                    // پیدا کردن بازار طلای 18 عیار (GLD_18C_750TMN)
+                    const goldMarket = data.result.find(market => market.symbol === 'GLD_18C_750TMN');
+                    
+                    if (goldMarket && goldMarket.marketCap && goldMarket.marketCap.lastPrice) {
+                        // استخراج قیمت نهایی (به تومان)
+                        currentGoldPrice = parseFloat(goldMarket.marketCap.lastPrice);
                         
-                        if (response.ok) {
-                            if (endpoint.type === 'allorigins_get') {
-                                const data = await response.json();
-                                jsonResponse = JSON.parse(data.contents);
-                            } else {
-                                jsonResponse = await response.json();
-                            }
-                            
-                            // بررسی اینکه آیا خروجی واقعا یک ساختار JSON معتبر است
-                            if (jsonResponse && typeof jsonResponse === 'object') {
-                                fetchSuccess = true;
-                                console.log("✅ ارتباط موفق بود از طریق:", endpoint.url);
-                                break; 
-                            }
-                        }
-                    } catch (e) {
-                        console.warn(`⚠️ مسیر ${endpoint.url} پاسخ نداد.`);
+                        // بروزرسانی رابط کاربری
+                        updateStatusUI(false);
+                        elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
+                        
+                        const now = new Date();
+                        const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+                        elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
+                    } else {
+                        throw new Error("قیمت طلا در خروجی وال‌گلد یافت نشد.");
                     }
+                } else {
+                     throw new Error("پاسخ نامعتبر از API");
                 }
-
-                if (!fetchSuccess || !jsonResponse) {
-                    throw new Error("ارتباط با سرور اصلی و تمام سرورهای واسطه قطع شده است.");
-                }
-
-                console.log("اطلاعات دریافتی:", jsonResponse);
-
-                // پیدا کردن خودکار قیمت 18 عیار
-                let rawPrice = findGold18Price(jsonResponse);
-
-                if (!rawPrice || isNaN(rawPrice)) {
-                    throw new Error("ساختار نامعتبر");
-                }
-                
-                // قیمت سایت و API هر دو به تومان هستند
-                currentGoldPrice = rawPrice;
-
-                updateStatusUI(false);
-                elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
-                
-                const now = new Date();
-                const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-                elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
-
-                elements.loading.classList.add('hidden');
-                elements.content.classList.remove('opacity-0');
 
             } catch (error) {
-                console.error("خطا در دریافت قیمت:", error);
-                
+                console.error("خطا:", error);
                 updateStatusUI(true, "خطا عدم دریافت اطلاعات");
-                
                 currentGoldPrice = null; 
                 elements.priceDisplay.textContent = "---";
-                elements.updateTime.textContent = "ارتباط قطع شد";
-                
+                elements.updateTime.textContent = "---";
+            } finally {
                 elements.loading.classList.add('hidden');
                 elements.content.classList.remove('opacity-0');
             }
         }
 
+        // --- بخش محاسبات ---
         elements.calcBtn.addEventListener('click', () => {
             const englishWeight = toEnglishNum(elements.weightInput.value);
             const weightVal = parseFloat(englishWeight);
 
             if (isNaN(weightVal) || weightVal <= 0) {
                 playErrorSound();
-                showError("لطفاً وزن طلا را به صورت صحیح (مثلاً ۴.۵) وارد کنید.");
+                showError("لطفاً وزن طلا را به صورت صحیح وارد کنید.");
                 return;
             }
 
             if (currentGoldPrice === null || currentGoldPrice <= 0) {
                 playErrorSound();
-                showError("سیستم قادر به دریافت نرخ زنده نیست. لطفاً بعدا تلاش کنید.");
+                showError("سیستم در حال حاضر قادر به ارتباط با سرور قیمت نیست.");
                 return;
             }
 
             elements.errorMsg.classList.add('hidden');
 
-            // محاسبه فرمول (پایه + ۸% اجرت + ۱۰% سود + ۳% مالیات)
+            // فرمول محاسباتی: پایه + ۸٪ اجرت + ۱۰٪ سود + ۳٪ مالیات
             const baseValue = weightVal * currentGoldPrice;
             const wage = baseValue * 0.08;
             const priceWithWage = baseValue + wage;
@@ -524,32 +438,30 @@
             const tax = priceWithProfit * 0.03;
             const finalTotal = priceWithProfit + tax;
 
-            // نمایش به تومان فارسی
             elements.finalPrice.textContent = formatMoney(finalTotal);
-            
             elements.resultContainer.classList.remove('hidden');
             elements.resultContainer.classList.add('flex');
             
             playSuccessSound();
         });
 
+        // مدیریت تایپ هوشمند در موبایل و کامپیوتر
         elements.weightInput.addEventListener('input', function(e) {
             let val = this.value;
-            // پاک کردن همه کاراکترها به جز اعداد فارسی، انگلیسی و نقطه
+            // فقط اجازه اعداد فارسی، انگلیسی و نقطه
             val = val.replace(/[^0-9۰-۹\.]/g, '');
-            
-            // جلوگیری از وارد کردن چند نقطه اعشار
+            // جلوگیری از دو نقطه اعشار
             const parts = val.split('.');
             if (parts.length > 2) {
                 val = parts[0] + '.' + parts.slice(1).join('');
             }
-            
             this.value = toPersianNum(val);
         });
 
         window.onload = function() {
             animateLoop();
             fetchLiveGoldPrice();
+            // آپدیت هر 60 ثانیه
             setInterval(fetchLiveGoldPrice, 60000); 
         };
     </script>
