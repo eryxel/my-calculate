@@ -23,7 +23,7 @@
 
         body {
             font-family: 'Yekan Bakh', Tahoma, Arial, sans-serif !important;
-            background-color: #0f172a; 
+            background-color: #0b1120; /* رنگ سرمه‌ای تیره دقیقاً مشابه عکس */
             margin: 0;
             padding: 0;
             color: #ffffff;
@@ -33,6 +33,7 @@
 
         * { font-family: 'Yekan Bakh', Tahoma, Arial, sans-serif !important; }
 
+        /* پس‌زمینه سه‌بعدی */
         #bg-canvas {
             position: fixed;
             top: 0;
@@ -56,9 +57,10 @@
             margin: 0 auto;
         }
 
-        /* پنل بالا دقیقاً مشابه عکس (رنگ تیره و هاله نئونی زرد) */
+        /* پنل بالا دقیقاً مشابه عکس (هاله نئونی زرد) */
         .panel-glow {
-            background-color: #0f172a; 
+            background-color: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(234, 179, 8, 0.4);
             border-radius: 1.25rem;
             box-shadow: 0 0 25px rgba(234, 179, 8, 0.2), inset 0 0 10px rgba(234, 179, 8, 0.05);
@@ -67,14 +69,15 @@
 
         /* پنل پایین */
         .panel-dark {
-            background-color: #0f172a;
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 1.25rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             width: 100%;
         }
 
-        /* دکمه محاسبه - استایل سه‌بعدی و متالیک طلایی */
+        /* دکمه محاسبه - متالیک طلایی */
         .btn-gold {
             background: linear-gradient(180deg, #fcd34d 0%, #b45309 100%);
             border: none;
@@ -92,7 +95,7 @@
             box-shadow: 0 1px 5px rgba(217, 119, 6, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
         }
 
-        /* نقطه سبز چشمک‌زن */
+        /* نقطه وضعیت چشمک‌زن */
         .status-dot {
             width: 8px;
             height: 8px;
@@ -101,11 +104,11 @@
             box-shadow: 0 0 8px #10b981;
             animation: pulse 1.5s infinite;
         }
-
-        .status-dot.error {
-            background-color: #ef4444;
-            box-shadow: 0 0 8px #ef4444;
-            animation: none;
+        
+        .status-dot.warning {
+            background-color: #f97316;
+            box-shadow: 0 0 8px #f97316;
+            animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
@@ -138,7 +141,7 @@
         
         <!-- Header -->
         <div class="text-center mb-6 w-full mt-4">
-            <h1 class="text-3xl md:text-5xl text-yellow-500 mb-2 font-bold drop-shadow-lg tracking-wide">گالری طلا چنس</h1>
+            <h1 class="text-4xl md:text-5xl text-yellow-500 mb-2 font-bold drop-shadow-lg tracking-wide">گالری طلا چنس</h1>
             <p class="text-gray-300 text-xs md:text-sm opacity-80">سیستم هوشمند محاسبه‌گر قطعات طلا</p>
         </div>
 
@@ -147,7 +150,7 @@
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-2">
                     <span id="status-dot" class="status-dot"></span>
-                    <span id="status-text" class="text-green-500 text-xs sm:text-sm">نرخ زنده و معتبر</span>
+                    <span id="status-text" class="text-green-500 text-xs sm:text-sm">در حال ارتباط...</span>
                 </div>
                 <div class="text-gray-300 text-xs sm:text-sm text-right">نرخ زنده هر گرم طلای ۱۸ عیار</div>
             </div>
@@ -188,9 +191,9 @@
                 <div id="error-message" class="hidden text-red-400 text-xs mt-2 text-right px-1"></div>
             </div>
 
-            <button id="calculate-btn" class="btn-gold w-full py-3 md:py-3.5 text-sm md:text-base flex justify-center items-center gap-2">
+            <button id="calculate-btn" class="btn-gold w-full py-3 md:py-3.5 text-sm md:text-base flex justify-center items-center gap-2 flex-row-reverse">
                 <span>محاسبه قیمت</span>
-                <i class="fas fa-calculator ml-1 opacity-80 text-xs md:text-sm"></i>
+                <i class="fas fa-calculator mr-1 opacity-80 text-xs md:text-sm"></i>
             </button>
 
             <!-- نتیجه نهایی -->
@@ -208,12 +211,12 @@
         </div>
     </div>
 
-    <!-- سرورهای امن برای ایران -->
+    <!-- سرورهای امن برای گرافیک -->
     <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
     <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
 
     <script>
-        // تبدیل اعداد
+        // توابع تبدیل اعداد به فارسی و فرمت‌بندی
         const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
         const englishDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
         
@@ -318,9 +321,7 @@
             synth.triggerAttackRelease(["C4", "G3"], "8n");
         }
 
-        // --- بخش API هوشمند (سیستم ۴ لایه) ---
         let currentGoldPrice = null; 
-        const FALLBACK_PRICE = 4750000; // قیمت پایه در صورت قطعی اینترنت یا فایروال
 
         const elements = {
             statusDot: document.getElementById('status-dot'),
@@ -338,22 +339,13 @@
 
         const updateStatusUI = (statusType, msg) => {
             elements.statusDot.className = "status-dot"; // Reset
-            if (statusType === 'error') {
-                elements.statusText.textContent = msg;
-                elements.statusText.className = "text-red-500 text-xs sm:text-sm";
-                elements.statusDot.style.backgroundColor = "#ef4444";
-                elements.statusDot.style.boxShadow = "0 0 8px #ef4444";
-                elements.statusDot.style.animation = "none";
-            } else if (statusType === 'warning') {
+            if (statusType === 'warning') {
                 elements.statusText.textContent = msg;
                 elements.statusText.className = "text-orange-400 text-xs sm:text-sm";
-                elements.statusDot.style.backgroundColor = "#f97316";
-                elements.statusDot.style.boxShadow = "0 0 8px #f97316";
+                elements.statusDot.classList.add('warning');
             } else {
                 elements.statusText.textContent = msg;
                 elements.statusText.className = "text-green-500 text-xs sm:text-sm";
-                elements.statusDot.style.backgroundColor = "#10b981";
-                elements.statusDot.style.boxShadow = "0 0 8px #10b981";
             }
         };
 
@@ -363,70 +355,50 @@
             setTimeout(() => { elements.errorMsg.classList.add('hidden'); }, 5000);
         };
 
+        // تابع اصلی دریافت قیمت از وال‌گلد (نسخه ضد قطعی)
         async function fetchLiveGoldPrice() {
             elements.loading.classList.remove('hidden');
             elements.content.classList.add('opacity-0');
 
-            const TARGET_API = "https://api.wallgold.ir/api/v1/markets";
-            let data = null;
+            try {
+                // درخواست مستقیم به سرور عمومی وال‌گلد
+                const response = await fetch("https://api.wallgold.ir/api/v1/markets", {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
 
-            // لیست مسیرهای تست (مستقیم + ۳ پروکسی مختلف)
-            const attempts = [
-                { type: 'Direct', url: TARGET_API },
-                { type: 'Corsproxy', url: `https://corsproxy.io/?${encodeURIComponent(TARGET_API)}` },
-                { type: 'Allorigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET_API)}` },
-                { type: 'Codetabs', url: `https://api.codetabs.com/v1/proxy?quest=${TARGET_API}` }
-            ];
+                if (!response.ok) throw new Error("Server response was not ok.");
 
-            for (const attempt of attempts) {
-                try {
-                    console.log(`در حال تست اتصال از طریق: ${attempt.type}`);
-                    const response = await fetch(attempt.url, {
-                        headers: attempt.type === 'Direct' ? { 'Accept': 'application/json' } : {}
-                    });
-                    
-                    if (response.ok) {
-                        data = await response.json();
-                        // بررسی اینکه آیا واقعاً JSON وال‌گلد است (نه صفحه کلودفلر)
-                        if (data && data.success && data.result) {
-                            console.log(`اتصال موفق از طریق: ${attempt.type}`);
-                            break; 
-                        } else {
-                            data = null; // داده نامعتبر است، برو سراغ مسیر بعدی
-                        }
-                    }
-                } catch (error) {
-                    console.warn(`مسیر ${attempt.type} مسدود بود.`);
-                }
-            }
-
-            // پردازش نتیجه
-            elements.loading.classList.add('hidden');
-            elements.content.classList.remove('opacity-0');
-
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-
-            if (data && data.result) {
-                const goldMarket = data.result.find(m => m.symbol === 'GLD_18C_750TMN');
+                const data = await response.json();
+                const goldMarket = data?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
+                
                 if (goldMarket && goldMarket.marketCap && goldMarket.marketCap.lastPrice) {
+                    // استخراج موفق قیمت
                     currentGoldPrice = parseFloat(goldMarket.marketCap.lastPrice);
                     updateStatusUI('success', "نرخ زنده و معتبر");
-                    elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
-                    elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
-                    return;
+                } else {
+                    throw new Error("دیتای طلا یافت نشد");
                 }
-            }
+            } catch (error) {
+                console.warn("ارتباط زنده مسدود شد، استفاده از نرخ پایه (آفلاین).");
+                
+                // در صورت قطعی اینترنت یا مسدود شدن توسط فایروال مرورگر:
+                // قیمت پایه قرار داده میشود تا ماشین حساب کار کند (نقطه نارنجی میشود)
+                currentGoldPrice = 4750000; 
+                updateStatusUI('warning', "نرخ آفلاین (محدودیت سرور)");
+            } finally {
+                // آپدیت کردن صفحه با عدد نهایی
+                elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
+                
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+                elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
 
-            // اگر تمام ۴ مسیر مسدود بودند (حالت آفلاین یا فایروال شدید)
-            console.error("تمام مسیرهای ارتباطی توسط سرور مسدود شدند. اجرای حالت آفلاین...");
-            currentGoldPrice = FALLBACK_PRICE; 
-            updateStatusUI('warning', "نرخ آفلاین (محدودیت سرور)");
-            elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
-            elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
+                elements.loading.classList.add('hidden');
+                elements.content.classList.remove('opacity-0');
+            }
         }
 
-        // --- بخش محاسبات ---
         elements.calcBtn.addEventListener('click', () => {
             const englishWeight = toEnglishNum(elements.weightInput.value);
             const weightVal = parseFloat(englishWeight);
@@ -439,7 +411,7 @@
 
             if (currentGoldPrice === null || currentGoldPrice <= 0) {
                 playErrorSound();
-                showError("خطا در سیستم قیمت‌گذاری.");
+                showError("خطا در سیستم قیمت‌گذاری. لطفاً کمی صبر کنید.");
                 return;
             }
 
@@ -461,21 +433,24 @@
             playSuccessSound();
         });
 
-        // مدیریت تایپ هوشمند 
+        // مدیریت تایپ هوشمند در موبایل و کامپیوتر
         elements.weightInput.addEventListener('input', function(e) {
             let val = this.value;
+            // حذف کاراکترهای غیرمجاز
             val = val.replace(/[^0-9۰-۹\.]/g, '');
+            // جلوگیری از بیش از یک نقطه اعشار
             const parts = val.split('.');
             if (parts.length > 2) {
                 val = parts[0] + '.' + parts.slice(1).join('');
             }
+            // تبدیل اتوماتیک به اعداد زیبای فارسی
             this.value = toPersianNum(val);
         });
 
         window.onload = function() {
-            animateLoop();
-            fetchLiveGoldPrice();
-            setInterval(fetchLiveGoldPrice, 60000); 
+            animateLoop(); // استارت انیمیشن پس‌زمینه
+            fetchLiveGoldPrice(); // گرفتن قیمت طلا
+            setInterval(fetchLiveGoldPrice, 60000); // آپدیت هر ۱ دقیقه
         };
     </script>
 </body>
