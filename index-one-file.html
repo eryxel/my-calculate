@@ -351,71 +351,83 @@
 
             const targetUrl = "https://webservice.tgnsrv.ir/Pr/Get/chancegoldshop0935/c09379160935c";
             let textData = null;
+            let success = false;
+
+            // لیست مسیرها: اولویت با پل نتلیفای (اگر ساخته باشید)، سپس مستقیم، سپس پروکسی
+            const endpoints = [
+                `/api/gold/Pr/Get/chancegoldshop0935/c09379160935c`, // مسیر جادویی نتلیفای
+                targetUrl, // مسیر مستقیم
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` // پروکسی پشتیبان
+            ];
+
+            for (let url of endpoints) {
+                try {
+                    // برای جلوگیری از کش شدن اطلاعات قدیمی
+                    const response = await fetch(url, { headers: { 'Cache-Control': 'no-cache' } });
+                    
+                    if (response.ok) {
+                        textData = await response.text();
+                        // بررسی اینکه صفحه ارور کلودفلر یا HTML نباشد
+                        if(textData && textData.length > 0 && !textData.includes('<html') && !textData.includes('Cloudflare')) {
+                             success = true;
+                             console.log("دریافت موفق از مسیر:", url);
+                             break; // در صورت دریافت موفق، بقیه مسیرها را تست نمی‌کند
+                        }
+                    }
+                } catch (err) {
+                    console.warn("این مسیر مسدود بود:", url);
+                }
+            }
 
             try {
-                // مرحله اول: تلاش برای دریافت مستقیم (اگر سایت روی دامنه خودش باشد کار میکند)
-                try {
-                    const response = await fetch(targetUrl);
-                    if (!response.ok) throw new Error("Direct network error");
-                    textData = await response.text();
-                } catch (directError) {
-                    console.warn("ارتباط مستقیم مسدود شد (احتمالاً CORS)، تلاش با سرور کمکی...");
-                    // مرحله دوم: استفاده از سرور پروکسی برای دور زدن محدودیت‌های امنیتی مرورگر
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-                    const proxyResponse = await fetch(proxyUrl);
-                    if (!proxyResponse.ok) throw new Error("Proxy network error");
-                    const proxyData = await proxyResponse.json();
-                    textData = proxyData.contents;
-                }
-
-                if (!textData) throw new Error("دیتایی دریافت نشد");
+                if (!success || !textData) throw new Error("دسترسی به API مسدود است");
                 
                 let foundPrice = null;
-                console.log("پاسخ دریافتی از سرور:", textData);
-
+                // حذف کاراکترهای اضافی
+                let cleanText = textData.replace(/<[^>]*>?/gm, ''); 
+                
                 try {
-                    // اگر پاسخ JSON باشد (ساختار استاندارد وب‌سرویس‌ها)
-                    const data = JSON.parse(textData);
-                    
-                    if (Array.isArray(data)) {
-                        const targetItem = data[0]; // معمولا اولین آیتم قیمت طلاست
-                        const priceKey = Object.keys(targetItem).find(k => ['p', 'price', 'v', 'value', 'lastprice'].includes(k.toLowerCase()));
-                        if (priceKey) foundPrice = targetItem[priceKey];
-                    } else if (typeof data === 'object') {
-                        const priceKey = Object.keys(data).find(k => ['p', 'price', 'v', 'value', 'lastprice'].includes(k.toLowerCase()));
-                        if (priceKey) foundPrice = data[priceKey];
-                    }
-                } catch (jsonError) {
-                    // اگر پاسخ مستقیماً فقط یک عدد متنی باشد (مثلا "4,750,000")
-                    const possibleNumber = parseFloat(textData.replace(/,/g, '').replace(/[^0-9.]/g, ''));
-                    if (!isNaN(possibleNumber) && possibleNumber > 1000) {
-                        foundPrice = possibleNumber;
-                    }
+                    const data = JSON.parse(cleanText);
+                    // جستجوگر هوشمند: می‌گردد تا یک عدد بالای صد هزار تومان پیدا کند
+                    const findNum = (obj) => {
+                        if(typeof obj === 'number' && obj > 100000) return obj;
+                        if(typeof obj === 'string') {
+                            let n = parseFloat(obj.replace(/,/g, ''));
+                            if(n > 100000) return n;
+                        }
+                        if(Array.isArray(obj)) {
+                            for(let i of obj) { let r = findNum(i); if(r) return r; }
+                        } else if(typeof obj === 'object' && obj !== null) {
+                            for(let k in obj) { let r = findNum(obj[k]); if(r) return r; }
+                        }
+                        return null;
+                    };
+                    foundPrice = findNum(data);
+                } catch(e) {
+                    // اگر فرمت، جیسون نبود و فقط یک متن ساده بود
+                    const possibleNumber = parseFloat(cleanText.replace(/,/g, '').replace(/[^0-9.]/g, ''));
+                    if (!isNaN(possibleNumber) && possibleNumber > 100000) foundPrice = possibleNumber;
                 }
 
                 if (foundPrice) {
-                    let finalNum = parseFloat(foundPrice.toString().replace(/,/g, ''));
-                    currentGoldPrice = finalNum;
+                    // اگر وب‌سرویس قیمت را به ریال داد (بیشتر از 40 میلیون)، تبدیلش می‌کنیم به تومان
+                    if (foundPrice > 40000000) foundPrice = foundPrice / 10;
+                    
+                    currentGoldPrice = foundPrice;
                     updateStatusUI('success', "نرخ زنده (متصل)");
                 } else {
-                    throw new Error("فرمت دیتای API ناشناخته است");
+                    throw new Error("عدد طلا در پاسخ یافت نشد");
                 }
 
             } catch (error) {
-                console.warn("خطای نهایی سیستم در دریافت قیمت:", error);
-                
-                // قیمت پایه فقط زمانی نشان داده میشود که هیچ راهی برای اتصال نباشد
-                if (currentGoldPrice === null) {
-                    currentGoldPrice = 4750000; 
-                }
-                updateStatusUI('warning', "آفلاین (خطای دسترسی API)");
+                console.warn("خطای نهایی:", error);
+                if (currentGoldPrice === null) currentGoldPrice = 4750000; 
+                updateStatusUI('warning', "آفلاین (محدودیت سرور)");
             } finally {
                 elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
-                
                 const now = new Date();
                 const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
                 elements.updateTime.textContent = `آخرین بروزرسانی: ${toPersianNum(timeString)}`;
-
                 elements.loading.classList.add('hidden');
                 elements.content.classList.remove('opacity-0');
             }
