@@ -349,63 +349,66 @@
             elements.loading.classList.remove('hidden');
             elements.content.classList.add('opacity-0');
 
+            const targetUrl = "https://webservice.tgnsrv.ir/Pr/Get/chancegoldshop0935/c09379160935c";
+            let textData = null;
+
             try {
-                let foundPrice = null;
-                // سیستم ضد کش: اضافه کردن زمان فعلی به آدرس برای جلوگیری از لجبازی سرورهای واسطه
-                const timestamp = Date.now();
-                const targetUrl = `https://api.wallgold.ir/api/v1/markets?t=${timestamp}`;
-
-                // تلاش اول: اتصال مستقیم (بسیار سریع)
+                // مرحله اول: تلاش برای دریافت مستقیم (اگر سایت روی دامنه خودش باشد کار میکند)
                 try {
-                    const res1 = await fetch(targetUrl, { headers: { 'Accept': 'application/json' } });
-                    const data1 = await res1.json();
-                    const market1 = data1?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
-                    if (market1 && market1.marketCap && market1.marketCap.lastPrice) {
-                        foundPrice = parseFloat(market1.marketCap.lastPrice);
-                    }
-                } catch (e1) {
-                    console.log("ارتباط مستقیم مسدود شد، تست پل دوم...");
+                    const response = await fetch(targetUrl);
+                    if (!response.ok) throw new Error("Direct network error");
+                    textData = await response.text();
+                } catch (directError) {
+                    console.warn("ارتباط مستقیم مسدود شد (احتمالاً CORS)، تلاش با سرور کمکی...");
+                    // مرحله دوم: استفاده از سرور پروکسی برای دور زدن محدودیت‌های امنیتی مرورگر
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                    const proxyResponse = await fetch(proxyUrl);
+                    if (!proxyResponse.ok) throw new Error("Proxy network error");
+                    const proxyData = await proxyResponse.json();
+                    textData = proxyData.contents;
                 }
 
-                // تلاش دوم: پل ارتباطی قوی corsproxy
-                if (!foundPrice) {
-                    try {
-                        const res2 = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
-                        const data2 = await res2.json();
-                        const market2 = data2?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
-                        if (market2 && market2.marketCap && market2.marketCap.lastPrice) {
-                            foundPrice = parseFloat(market2.marketCap.lastPrice);
-                        }
-                    } catch (e2) {
-                        console.log("مسیر دوم مسدود شد، تست پل سوم...");
-                    }
-                }
+                if (!textData) throw new Error("دیتایی دریافت نشد");
+                
+                let foundPrice = null;
+                console.log("پاسخ دریافتی از سرور:", textData);
 
-                // تلاش سوم: پل ارتباطی AllOrigins (کپسوله)
-                if (!foundPrice) {
-                    const bridgeUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-                    const res3 = await fetch(bridgeUrl);
-                    const bridgeData = await res3.json();
-                    const data3 = JSON.parse(bridgeData.contents);
-                    const market3 = data3?.result?.find(m => m.symbol === 'GLD_18C_750TMN');
-                    if (market3 && market3.marketCap && market3.marketCap.lastPrice) {
-                        foundPrice = parseFloat(market3.marketCap.lastPrice);
+                try {
+                    // اگر پاسخ JSON باشد (ساختار استاندارد وب‌سرویس‌ها)
+                    const data = JSON.parse(textData);
+                    
+                    if (Array.isArray(data)) {
+                        const targetItem = data[0]; // معمولا اولین آیتم قیمت طلاست
+                        const priceKey = Object.keys(targetItem).find(k => ['p', 'price', 'v', 'value', 'lastprice'].includes(k.toLowerCase()));
+                        if (priceKey) foundPrice = targetItem[priceKey];
+                    } else if (typeof data === 'object') {
+                        const priceKey = Object.keys(data).find(k => ['p', 'price', 'v', 'value', 'lastprice'].includes(k.toLowerCase()));
+                        if (priceKey) foundPrice = data[priceKey];
+                    }
+                } catch (jsonError) {
+                    // اگر پاسخ مستقیماً فقط یک عدد متنی باشد (مثلا "4,750,000")
+                    const possibleNumber = parseFloat(textData.replace(/,/g, '').replace(/[^0-9.]/g, ''));
+                    if (!isNaN(possibleNumber) && possibleNumber > 1000) {
+                        foundPrice = possibleNumber;
                     }
                 }
 
                 if (foundPrice) {
-                    currentGoldPrice = foundPrice;
-                    updateStatusUI('success', "نرخ زنده و معتبر");
+                    let finalNum = parseFloat(foundPrice.toString().replace(/,/g, ''));
+                    currentGoldPrice = finalNum;
+                    updateStatusUI('success', "نرخ زنده (متصل)");
                 } else {
-                    throw new Error("تمام مسیرهای ارتباطی توسط فایروال مسدود هستند");
+                    throw new Error("فرمت دیتای API ناشناخته است");
                 }
 
             } catch (error) {
-                console.warn("استفاده از نرخ آفلاین به دلیل:", error);
+                console.warn("خطای نهایی سیستم در دریافت قیمت:", error);
                 
-                // در صورت قطعی اینترنت کاربر یا مسدودی کامل، عدد پیش‌فرض بارگذاری می‌شود
-                currentGoldPrice = 4750000; 
-                updateStatusUI('warning', "نرخ آفلاین (محدودیت اینترنت)");
+                // قیمت پایه فقط زمانی نشان داده میشود که هیچ راهی برای اتصال نباشد
+                if (currentGoldPrice === null) {
+                    currentGoldPrice = 4750000; 
+                }
+                updateStatusUI('warning', "آفلاین (خطای دسترسی API)");
             } finally {
                 elements.priceDisplay.textContent = formatMoney(currentGoldPrice);
                 
@@ -464,7 +467,7 @@
         window.onload = function() {
             animateLoop(); 
             fetchLiveGoldPrice(); 
-            setInterval(fetchLiveGoldPrice, 60000); // آپدیت قیمت هر ۶۰ ثانیه
+            setInterval(fetchLiveGoldPrice, 60000); 
         };
     </script>
 </body>
